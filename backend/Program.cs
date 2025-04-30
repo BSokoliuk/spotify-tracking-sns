@@ -161,11 +161,7 @@ app.UseHttpsRedirection();
 
 app.UseCors(options =>
 {
-    options.WithOrigins("http://frontend:3000")
-           .AllowAnyMethod()
-           .AllowAnyHeader()
-           .AllowCredentials();
-    options.WithOrigins("http://localhost:3000")
+    options.WithOrigins("http://frontend:3000", "http://localhost:3000")
            .AllowAnyMethod()
            .AllowAnyHeader()
            .AllowCredentials();
