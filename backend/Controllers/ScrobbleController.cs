@@ -1,13 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
-using Models;
 using Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using DTOs;
-using System.Security.Claims;
-
+using Helpers;
 
 namespace Controllers;
+
 [ApiController]
 [Route("api/scrobbles")]
 public class ScrobblesController : ControllerBase
@@ -25,10 +24,9 @@ public class ScrobblesController : ControllerBase
     [HttpGet("recent")]
     public async Task<IActionResult> GetRecentScrobbles([FromBody] RecentScrobblesRequest request)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
             var user = await _authenticationService.GetUser(nameIdentifier);
             var scrobbles = await _scrobbleService.GetRecent(user.Id, request.N);
             return Ok(new RecentScrobblesResponse
@@ -70,9 +68,9 @@ public class ScrobblesController : ControllerBase
     // [HttpGet("n_interval")]
     // public async Task<IActionResult> GetNScrobblesInInterval([FromBody] NIntervalScrobblesRequest request)
     // {
-    //     var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     //     try
     //     {
+    //         var nameIdentifier = User.GetNameIdentifier();
     //         var user = await _authenticationService.GetUser(nameIdentifier);
     //         var scrobbles = await _scrobbleService.GetScrobblesInInterval(user.Id, request.Start, request.End);
     //         return Ok(new NIntervalScrobblesResponse
@@ -116,10 +114,10 @@ public class ScrobblesController : ControllerBase
     [HttpDelete("delete")]
     public async Task<IActionResult> DeleteScrobble([FromBody] DeleteScrobbleRequest request)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var roles = User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
+        var roles = User.GetRoles();
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
             var user = await _authenticationService.GetUser(nameIdentifier);
             if (await _scrobbleService.DeleteScrobble(request.Id, user.Id, roles))
                 return Ok(new DeleteScrobbleResponse
@@ -454,9 +452,9 @@ public class ScrobblesController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> GetCollage([FromBody] CollageRequest request)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
             var user = await _authenticationService.GetUser(nameIdentifier);
             var collage = await _scrobbleService.GetCollage(user.Id, request.Start, request.End, request.Size, request.Subject);
             return Ok(new CollageResponse

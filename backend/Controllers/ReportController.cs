@@ -1,25 +1,19 @@
 using Microsoft.AspNetCore.Mvc;
-using Models;
 using Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using DTOs;
-using System.Security.Claims;
-
 
 namespace Controllers;
+
 [ApiController]
 [Route("api/reports")]
 public class ReportController : ControllerBase
 {
-    private readonly AuthenticationService _authenticationService;
-    private readonly ScrobbleService _scrobbleService;
     private readonly ReportService _reportService;
 
-    public ReportController(AuthenticationService authenticationService, ScrobbleService scrobbleService, ReportService reportService)
+    public ReportController(ReportService reportService)
     {
-        _authenticationService = authenticationService;
-        _scrobbleService = scrobbleService;
         _reportService = reportService;
     }
 

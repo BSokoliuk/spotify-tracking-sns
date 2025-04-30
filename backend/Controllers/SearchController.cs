@@ -1,18 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using Models;
 using Services;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using DTOs;
-using System.Security.Claims;
-
 
 namespace Controllers;
+
 [ApiController]
 [Route("api/search")]
 public class SearchController : ControllerBase
 {
-    //add userService, songService, albumService and artistService
     private readonly UserService _userService;
     private readonly ScrobbleService _scrobbleService;
 
@@ -46,6 +42,4 @@ public class SearchController : ControllerBase
             return BadRequest(new { message = e.Message });
         }
     }
-
-
 }

@@ -241,9 +241,9 @@ public class UserService
         return null!;
     }
 
-    public async Task<(float,List<string>)> Compability(string userId, string senderId)
+    public async Task<(float,List<string>)> CalculateCompatibility(string userId, string senderId)
     {
-        //calculate compability between two users by comparing artist in their scrobbles
+        //calculate compatibility between two users by comparing artist in their scrobbles
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
         var sender = await _context.Users.FirstOrDefaultAsync(u => u.Id == senderId);
 

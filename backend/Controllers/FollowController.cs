@@ -1,13 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
-using Models;
 using Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using DTOs;
-using System.Security.Claims;
-
+using Helpers;
 
 namespace Controllers;
+
 [ApiController]
 [Route("api/follows")]
 public class FollowController : ControllerBase
@@ -25,9 +24,9 @@ public class FollowController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult> FollowUser([FromBody] FollowRequest request)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
             var user = await _authenticationService.GetUser(nameIdentifier);
             if (await _followService.FollowUser(request.UserId, user))
                 return Ok(new FollowResponse
@@ -51,9 +50,9 @@ public class FollowController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult> UnfollowUser([FromBody] FollowRequest request)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
             var user = await _authenticationService.GetUser(nameIdentifier);
             if (await _followService.UnfollowUser(request.UserId, user))
                 return Ok(new FollowResponse
@@ -91,6 +90,4 @@ public class FollowController : ControllerBase
             return BadRequest(new { message = e.Message });
         }
     }
-
-
 }

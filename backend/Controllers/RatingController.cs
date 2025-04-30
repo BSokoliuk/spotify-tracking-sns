@@ -1,13 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
-using Models;
 using Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using DTOs;
-using System.Security.Claims;
-
+using Helpers;
 
 namespace Controllers;
+
 [ApiController]
 [Route("api/ratings")]
 public class RatingController : ControllerBase
@@ -25,10 +24,9 @@ public class RatingController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> RateSong([FromBody] CreateRateItemRequest request)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
             var user = await _authenticationService.GetUser(nameIdentifier);
             var songRating = await _ratingService.CreateRatingForSong(request.ItemId, request.Rating, user.Id);
             if (songRating != null)
@@ -54,9 +52,9 @@ public class RatingController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> RateAlbum([FromBody] CreateRateItemRequest request)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
             var user = await _authenticationService.GetUser(nameIdentifier);
             if (await _ratingService.CreateRatingForAlbum(request.ItemId, request.Rating, user.Id))
                 return Ok(new CreateRateItemResponse
@@ -80,9 +78,9 @@ public class RatingController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> RateArtist([FromBody] CreateRateItemRequest request)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
             var user = await _authenticationService.GetUser(nameIdentifier);
             if (await _ratingService.CreateRatingForArtist(request.ItemId, request.Rating, user.Id))
                 return Ok(new CreateRateItemResponse
@@ -107,9 +105,9 @@ public class RatingController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> RerateSong([FromBody] CreateRateItemRequest request)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
             var user = await _authenticationService.GetUser(nameIdentifier);
             var songRating = await _ratingService.ModifyRatingForSong(request.ItemId, request.Rating, user.Id);
             if (songRating != null)
@@ -135,9 +133,9 @@ public class RatingController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> RerateAlbum([FromBody] CreateRateItemRequest request)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
             var user = await _authenticationService.GetUser(nameIdentifier);
             if (await _ratingService.ModifyRatingForAlbum(request.ItemId, request.Rating, user.Id))
                 return Ok(new CreateRateItemResponse
@@ -161,9 +159,9 @@ public class RatingController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> RerateArtist([FromBody] CreateRateItemRequest request)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
             var user = await _authenticationService.GetUser(nameIdentifier);
             if (await _ratingService.ModifyRatingForArtist(request.ItemId, request.Rating, user.Id))
                 return Ok(new CreateRateItemResponse

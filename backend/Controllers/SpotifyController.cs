@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Services;
 
 namespace Controllers;
+
 [ApiController]
 [Route("api/spotify")]
 public class SpotifyController : ControllerBase

@@ -80,7 +80,7 @@ public class UsersController : ControllerBase
 
   [HttpPost("logout")]
   [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-  public async Task<IActionResult> Logout()
+  public IActionResult Logout()
   {
     try
     {
@@ -90,7 +90,7 @@ public class UsersController : ControllerBase
     }
     catch (Exception ex)
     {
-      return BadRequest(new { Success = false, Message = ex.Message });
+      return BadRequest(new { Success = false, ex.Message });
     }
   }
 
@@ -141,27 +141,20 @@ public class UsersController : ControllerBase
   [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
   public async Task<IActionResult> UserBioAvatarEdit(string username, [FromBody] EditUsersProfileRequest request)
   {
-    var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
     try
     {
+      var nameIdentifier = User.GetNameIdentifier();
       var user = await _authenticationService.GetUser(nameIdentifier);
       var response = await _userService.EditProfileData(username, request.Bio, request.Avatar, user.Id);
 
-      switch (response)
+      return response switch
       {
-        case 200:
-          return Ok(new { Success = true, Message = "User was successfully edited" });
-        case 404:
-          return NotFound(new { Success = false, Message = "User was not found in database" });
-        case 403:
-          return Unauthorized(new { Success = false, Message = "Unauthorized attempt to edit users profile data" });
-        case 400:
-          return BadRequest(new { Success = false, Message = "Error updating database" });
-        default:
-          return StatusCode(500, new { Success = false, Message = "An unexpected error occurred" });
-      }
-
+        200 => Ok(new { Success = true, Message = "User was successfully edited" }),
+        404 => NotFound(new { Success = false, Message = "User was not found in database" }),
+        403 => Unauthorized(new { Success = false, Message = "Unauthorized attempt to edit users profile data" }),
+        400 => BadRequest(new { Success = false, Message = "Error updating database" }),
+        _ => StatusCode(500, new { Success = false, Message = "An unexpected error occurred" }),
+      };
     }
     catch (Exception e)
     {
@@ -174,11 +167,9 @@ public class UsersController : ControllerBase
   [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
   public async Task<IActionResult> ConnectSpotify([FromBody] ConnectSpotifyRequest request)
   {
-    var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-    var roles = User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
-
     try
     {
+      var nameIdentifier = User.GetNameIdentifier();
       var user = await _authenticationService.GetUser(nameIdentifier);
       var response = await _userService.ConnectSpotify(request.RefreshToken, request.Id_User_Spotify_API, user.Id);
 
@@ -199,11 +190,9 @@ public class UsersController : ControllerBase
   [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
   public async Task<IActionResult> DisconnectSpotify()
   {
-    var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-    var roles = User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
-
     try
     {
+      var nameIdentifier = User.GetNameIdentifier();
       var user = await _authenticationService.GetUser(nameIdentifier);
       var response = await _userService.DisconnectSpotify(user.Id);
 
@@ -211,7 +200,6 @@ public class UsersController : ControllerBase
         return Ok(new { Success = true, Message = "Spotify account was successfully disconnected" });
       else
         return BadRequest(new { Success = false, Message = "Error disconnecting Spotify account" });
-
     }
     catch (Exception e)
     {
@@ -241,25 +229,23 @@ public class UsersController : ControllerBase
 
   [HttpGet("compability")]
   [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-  public async Task<IActionResult> Compability([FromQuery] string user_id)
+  public async Task<IActionResult> Compatibility([FromQuery] string user_id)
   {
-    var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-    var roles = User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
-
     try
     {
+      var nameIdentifier = User.GetNameIdentifier();
       var user = await _authenticationService.GetUser(nameIdentifier);
-      var response = await _userService.Compability(user_id, user.Id);
+      var response = await _userService.CalculateCompatibility(user_id, user.Id);
 
       if (response.Item1 != -1)
-        return Ok(new { Success = true, Message = "Compability was successfully calculated", Compability = response.Item1, Artists = response.Item2 });
+        return Ok(new { Success = true, Message = "Compatibility was successfully calculated", Compability = response.Item1, Artists = response.Item2 });
       else
-        return BadRequest(new { Success = false, Message = "Error calculating compability" });
+        return BadRequest(new { Success = false, Message = "Error calculating compatibility" });
 
     }
     catch (Exception e)
     {
-      Console.WriteLine($"Error calculating compability: {e}");
+      Console.WriteLine($"Error calculating compatibility: {e}");
       return BadRequest(new { Success = false, Message = e });
     }
   }

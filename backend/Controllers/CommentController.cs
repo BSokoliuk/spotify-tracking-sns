@@ -1,13 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
-using Models;
 using Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using DTOs;
-using System.Security.Claims;
-
+using Helpers;
 
 namespace Controllers;
+
 [ApiController]
 [Route("api/comments")]
 public class CommentController : ControllerBase
@@ -41,24 +40,27 @@ public class CommentController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> CreateProfileComment([FromBody] CreateProfileCommentRequest request)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
             var sender = await _authenticationService.GetUser(nameIdentifier);
             var profileComment = await _commentService.CreateProfileComment(request.Comment, request.RecipientId, sender);
-            if (profileComment != null)
-                return Ok(new CreateCommentResponse
-                {
-                    Success = true,
-                    Message = "Comment created successfully",
-                    ProfileComment = profileComment
-
-                });
-            return BadRequest(new CreateCommentResponse
+            if (profileComment is null)
             {
-                Success = false,
-                Message = "Comment creation failed"
+                return BadRequest(new CreateCommentResponse
+                {
+                    Success = false,
+                    Message = "Comment creation failed"
+                });
+            }
+            return Ok(new CreateCommentResponse
+            {
+                Success = true,
+                Message = "Comment created successfully",
+                ProfileComment = profileComment
+
             });
+           
         }
         catch (Exception e)
         {
@@ -70,11 +72,11 @@ public class CommentController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> DeleteProfileComment(string id)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var roles = User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
-        var user = await _authenticationService.GetUser(nameIdentifier);
+        var roles = User.GetRoles();
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
+            var user = await _authenticationService.GetUser(nameIdentifier);
             if (await _commentService.DeleteProfileComment(id, roles, user.Id))
                 return Ok(new { message = "Comment deleted successfully" });
 
@@ -104,9 +106,9 @@ public class CommentController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> CreateSongComment([FromBody] CreateSongCommentRequest request)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
             var user = await _authenticationService.GetUser(nameIdentifier);
             var songComment = await _commentService.CreateSongComment(request.Comment, request.SongId, user);
             if (songComment != null)
@@ -132,11 +134,11 @@ public class CommentController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> DeleteSongComment(string id)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var roles = User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
-        var user = await _authenticationService.GetUser(nameIdentifier);
+        var roles = User.GetRoles();
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
+            var user = await _authenticationService.GetUser(nameIdentifier);
             if (await _commentService.DeleteSongComment(id, roles, user.Id))
                 return Ok(new { message = "Comment deleted successfully" });
 
@@ -166,9 +168,9 @@ public class CommentController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> CreateAlbumComment([FromBody] CreateAlbumCommentRequest request)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
             var user = await _authenticationService.GetUser(nameIdentifier);
             var albumComment = await _commentService.CreateAlbumComment(request.Comment, request.AlbumId, user);
             if (albumComment != null)
@@ -194,11 +196,11 @@ public class CommentController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> DeleteAlbumComment(string id)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var roles = User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
-        var user = await _authenticationService.GetUser(nameIdentifier);
+        var roles = User.GetRoles();
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
+            var user = await _authenticationService.GetUser(nameIdentifier);
             if (await _commentService.DeleteAlbumComment(id, roles, user.Id))
                 return Ok(new { message = "Comment deleted successfully" });
 
@@ -228,9 +230,9 @@ public class CommentController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> CreateArtistComment([FromBody] CreateArtistCommentRequest request)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
             var user = await _authenticationService.GetUser(nameIdentifier);
             var artistComment = await _commentService.CreateArtistComment(request.Comment, request.ArtistId, user);
             if (artistComment != null)
@@ -256,11 +258,11 @@ public class CommentController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> DeleteArtistComment(string id)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var roles = User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
-        var user = await _authenticationService.GetUser(nameIdentifier);
+        var roles = User.GetRoles();
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
+            var user = await _authenticationService.GetUser(nameIdentifier);
             if (await _commentService.DeleteArtistComment(id, roles, user.Id))
                 return Ok(new { message = "Comment deleted successfully" });
 

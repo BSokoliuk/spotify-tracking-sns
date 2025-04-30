@@ -1,13 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
-using Models;
 using Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using DTOs;
-using System.Security.Claims;
-
+using Helpers;
 
 namespace Controllers;
+
 [ApiController]
 [Route("api/favourite-song")]
 public class FavouriteSongController : ControllerBase
@@ -25,9 +24,9 @@ public class FavouriteSongController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult> AddSongToFavourites([FromBody] FavouriteSongRequest request)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
             var user = await _authenticationService.GetUser(nameIdentifier);
             var favouriteSong = await _favouriteSongService.AddFavouriteSong(request.SongId, user);
             if (favouriteSong != null)
@@ -53,9 +52,9 @@ public class FavouriteSongController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult> DeleteSongFromFavourites([FromBody] FavouriteSongRequest request)
     {
-        var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         try
         {
+            var nameIdentifier = User.GetNameIdentifier();
             var user = await _authenticationService.GetUser(nameIdentifier);
             var favouriteSong = await _favouriteSongService.DeleteFavouriteSong(request.SongId, user);
             if (favouriteSong != null)
