@@ -1,7 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
 using Models;
-using Services;
 
 namespace DTOs;
 
@@ -9,20 +7,20 @@ public class ProfileResponse
 {
     public string Id { get; set; } = string.Empty;
     public string UserName { get; set; } = string.Empty;
-    public byte[] ProfilePicture { get; set; } = new byte[0];
+    public byte[] ProfilePicture { get; set; } = [];
     public string Description { get; set; } = string.Empty;
     public int ArtistCount { get; set; } = 0;
     public DateTime Creation_Date { get; set; } = DateTime.Now;
-    public List<Follows> Followers { get; set; } = new List<Follows>();
-    public List<Follows> Following { get; set; } = new List<Follows>();
-    public List<ProfileComments> ProfileComments { get; set; } = new List<ProfileComments>();
-    public List<Scrobbles> Scrobbles { get; set; } = new List<Scrobbles>();
+    public List<Follows> Followers { get; set; } = [];
+    public List<Follows> Following { get; set; } = [];
+    public List<ProfileComments> ProfileComments { get; set; } = [];
+    public List<Scrobbles> Scrobbles { get; set; } = [];
     public int ScrobblesCount { get; set; } = 0;
-    public List<RatedSongs> RatedSongs { get; set; } = new List<RatedSongs>();
-    public List<RatedAlbums> RatedAlbums { get; set; } = new List<RatedAlbums>();
-    public List<RatedArtists> RatedArtists { get; set; } = new List<RatedArtists>();
-    public List<FavouriteSongs> FavouriteSongs { get; set; } = new List<FavouriteSongs>();
-    public byte[] TopArtistImage { get; set; } = new byte[0];
+    public List<RatedSongs> RatedSongs { get; set; } = [];
+    public List<RatedAlbums> RatedAlbums { get; set; } = [];
+    public List<RatedArtists> RatedArtists { get; set; } = [];
+    public List<FavouriteSongs> FavouriteSongs { get; set; } = [];
+    public byte[] TopArtistImage { get; set; } = [];
     public string RefreshToken { get; set; } = string.Empty;
 }
 
@@ -88,6 +86,7 @@ public class FavouriteSongs
     public string Id_Song_Internal { get; set; } = string.Empty;
     public Song Song { get; set; } = null!;
 }
+
 public class EditUsersProfileRequest
 {
     public string Bio { get; set; } = string.Empty;
@@ -99,7 +98,7 @@ public class Sender
 {
     public string Id { get; set; } = string.Empty;
     public string UserName { get; set; } = string.Empty;
-    public byte[] ProfilePicture { get; set; } = new byte[0];
+    public byte[] ProfilePicture { get; set; } = [];
 }
 
 public class FollowerData
@@ -107,7 +106,7 @@ public class FollowerData
     public string Id { get; set; } = string.Empty;
     public string UserName { get; set; } = string.Empty;
     public string Bio { get; set; } = string.Empty;
-    public byte[] ProfilePicture { get; set; } = new byte[0];
+    public byte[] ProfilePicture { get; set; } = [];
 }
 
 public class ConnectSpotifyRequest
@@ -120,7 +119,7 @@ public class MostActiveUsers
 {
     public string Id { get; set; } = string.Empty;
     public string UserName { get; set; } = string.Empty;
-    public byte[] ProfilePicture { get; set; } = new byte[0];
+    public byte[] ProfilePicture { get; set; } = [];
     public int ScrobbleCount { get; set; } = 0;
 }
 

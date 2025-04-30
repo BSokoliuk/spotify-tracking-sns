@@ -13,7 +13,7 @@ public class RecentScrobblesResponse
 {
     public bool Success { get; set; }
     public string Message { get; set; } = string.Empty;
-    public List<Scrobble> Scrobbles { get; set; } = new List<Scrobble>();
+    public List<Scrobble> Scrobbles { get; set; } = [];
 }
 
 public class IntervalScrobblesRequest
@@ -29,7 +29,7 @@ public class IntervalScrobblesResponse
 {
     public bool Success { get; set; }
     public string Message { get; set; } = string.Empty;
-    public List<ScrobbleWithRating> Scrobbles { get; set; } = new List<ScrobbleWithRating>();
+    public List<ScrobbleWithRating> Scrobbles { get; set; } = [];
     public int TotalCount { get; set; } = 0;
     public int TotalPages { get; set; } = 0;
     public int PageNumber { get; set; } = 1;
@@ -43,7 +43,6 @@ public class NIntervalScrobblesRequest
     public DateTime End { get; set; } = DateTime.Now;
     [Required]
     public int N { get; set; } = 1;
-
 }
 
 public class NIntervalTopUserScrobblesRequest
@@ -62,7 +61,7 @@ public class NTopUserScrobblesRequest
     [Required]
     public int N { get; set; } = 1;
     [Required]
-    public string Id { get; set; }
+    public string Id { get; set; } = string.Empty;
 }
 
 public class NIntervalTopScrobblesRequest
@@ -83,7 +82,7 @@ public class NIntervalScrobblesResponse
 {
     public bool Success { get; set; }
     public string Message { get; set; } = string.Empty;
-    public List<ScrobbleWithRating> Scrobbles { get; set; } = new List<ScrobbleWithRating>();
+    public List<ScrobbleWithRating> Scrobbles { get; set; } = [];
 }
 
 public class CreateScrobbleRequest
@@ -118,70 +117,73 @@ public class DeleteScrobbleResponse
 
 public class TopNSongsScrobblesResponse
 {
-    public List<SongScrobbleCount> Songs { get; set; }
+    public List<SongScrobbleCount> Songs { get; set; } = [];
     public bool Success { get; set; }
 }
 
 public class TopNSongsScrobblesPaginateResponse
 {
-    public List<SongScrobbleCount> Songs { get; set; }
+    public List<SongScrobbleCount> Songs { get; set; } = [];
     public bool Success { get; set; }
     public int TotalCount { get; set; }
     public int TotalPages { get; set; }
 }
 public class TopNAlbumsScrobblesPaginateResponse
 {
-    public List<AlbumScrobbleCount> Albums { get; set; }
+    public List<AlbumScrobbleCount> Albums { get; set; } = [];
     public bool Success { get; set; }
     public int TotalCount { get; set; }
     public int TotalPages { get; set; }
 }
 public class TopNArtistsScrobblesPaginateResponse
 {
-    public List<ArtistScrobbleCount> Artists { get; set; }
+    public List<ArtistScrobbleCount> Artists { get; set; } = [];
     public bool Success { get; set; }
     public int TotalCount { get; set; }
     public int TotalPages { get; set; }
 }
+
 public class SongScrobbleCount
 {
-    public Song Song { get; set; }
+    public required Song Song { get; set; }
     public int Count { get; set; }
     public double AvgRating { get; set; }
 }
 
 public class ScrobbleWithRating
 {
-    public Scrobble Scrobble { get; set; }
+    public required Scrobble Scrobble { get; set; }
     public double AvgRating { get; set; }
 }
 
 public class TopNAlbumsScrobblesResponse
 {
-    public List<AlbumScrobbleCount> Albums { get; set; }
+    public List<AlbumScrobbleCount> Albums { get; set; } = [];
     public bool Success { get; set; }
 }
+
 public class AlbumScrobbleCount
 {
-    public Album Album { get; set; }
+    public required Album Album { get; set; }
     public int Count { get; set; }
     public double AvgRating { get; set; }
 }
+
 public class TopNArtistsScrobblesResponse
 {
-    public List<ArtistScrobbleCount> Artists { get; set; }
+    public List<ArtistScrobbleCount> Artists { get; set; } = [];
     public bool Success { get; set; }
 }
 public class ArtistScrobbleCount
 {
-    public Artist Artist { get; set; }
+    public required Artist Artist { get; set; }
     public int Count { get; set; }
     public double AvgRating { get; set; }
 }
 
 public class SongResponse
 {
-    public Song Song { get; set; }
+    public required Song Song { get; set; }
     public int ScrobbleCount { get; set; }
     public int ListenersCount { get; set; }
 
@@ -193,7 +195,7 @@ public class SongResponse
 
 public class AlbumResponse
 {
-    public Album Album { get; set; }
+    public required Album Album { get; set; }
     public int ScrobbleCount { get; set; }
     public int ListenersCount { get; set; }
     public double AvgRating { get; set; }
@@ -203,7 +205,7 @@ public class AlbumResponse
 
 public class ArtistResponse
 {
-    public Artist Artist { get; set; }
+    public required Artist Artist { get; set; }
     public int ScrobbleCount { get; set; }
     public int ListenersCount { get; set; }
     public double AvgRating { get; set; }
@@ -236,6 +238,6 @@ public class CollageRequest
 
 public class CollageResponse
 {
-    public byte[] Collage { get; set; }
+    public byte[] Collage { get; set; } = [];
     public bool Success { get; set; }
 }

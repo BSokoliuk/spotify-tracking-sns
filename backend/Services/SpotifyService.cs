@@ -197,7 +197,7 @@ public class SpotifyService
             var responseContent = await response.Content.ReadAsStringAsync();
             var json = JObject.Parse(responseContent);
             return new SongRecommendations{
-                Songs = json["tracks"].Select(song => new ReccomendedSong{
+                Songs = json["tracks"].Select(song => new RecommendedSong{
                     Title = song["name"].ToString(),
                     Id = song["id"].ToString(),
                     Artist = song["artists"][0]["name"].ToString(),
@@ -210,7 +210,7 @@ public class SpotifyService
         Console.WriteLine(response.Content.ReadAsStringAsync().Result);
 
         return new SongRecommendations{
-            Songs = new List<ReccomendedSong>()
+            Songs = new List<RecommendedSong>()
         };
     }
 
@@ -225,7 +225,7 @@ public class SpotifyService
             var responseContent = await response.Content.ReadAsStringAsync();
             var json = JObject.Parse(responseContent);
             return new ArtistRecommendations{
-                Artists = json["artists"].Select(artist => new ReccomendedArtist{
+                Artists = json["artists"].Select(artist => new RecommendedArtist{
                     Name = artist["name"].ToString(),
                     Id = artist["id"].ToString(),
                     Photo = artist["images"][0]["url"].ToString()
@@ -237,7 +237,7 @@ public class SpotifyService
         Console.WriteLine(response.Content.ReadAsStringAsync().Result);
 
         return new ArtistRecommendations{
-            Artists = new List<ReccomendedArtist>()
+            Artists = new List<RecommendedArtist>()
         };
     }
 

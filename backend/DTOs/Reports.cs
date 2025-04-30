@@ -39,14 +39,13 @@ public class TopUsers
     public int ScrobbleCount { get; set; } = 0;
     public int Rank { get; set; } = 0;
     public int PreviousRank { get; set; } = 0;
-
 }
 
 public class TopUsersResponse
 {
     public bool Success { get; set; } = false;
     public string Message { get; set; } = string.Empty;
-    public List<TopUsers> TopUsers { get; set; } = new List<TopUsers>();
+    public List<TopUsers> TopUsers { get; set; } = [];
 }
 
 public class CountByDay
@@ -60,7 +59,7 @@ public class CountByDayResponse
 {
     public bool Success { get; set; } = false;
     public string Message { get; set; } = string.Empty;
-    public List<CountByDay> CountByDay { get; set; } = new List<CountByDay>();
+    public List<CountByDay> CountByDay { get; set; } = [];
 }
 
 public class CountByWeek
@@ -74,7 +73,7 @@ public class CountByWeekResponse
 {
     public bool Success { get; set; } = false;
     public string Message { get; set; } = string.Empty;
-    public List<CountByWeek> CountByWeek { get; set; } = new List<CountByWeek>();
+    public List<CountByWeek> CountByWeek { get; set; } = [];
 }
 
 public class CountByMonth
@@ -88,5 +87,5 @@ public class CountByMonthResponse
 {
     public bool Success { get; set; } = false;
     public string Message { get; set; } = string.Empty;
-    public List<CountByMonth> CountByMonth { get; set; } = new List<CountByMonth>();
+    public List<CountByMonth> CountByMonth { get; set; } = [];
 }
