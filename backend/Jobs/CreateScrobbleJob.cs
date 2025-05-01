@@ -1,10 +1,8 @@
-using Microsoft.EntityFrameworkCore.Storage;
 using Quartz;
 using Services;
 using Data;
 using Models;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json.Linq;
 
 namespace Jobs;
 
@@ -40,7 +38,7 @@ public class CreateScrobbleJob : IJob
             //get time of last scrobble in unix
             DateTime lastScrobbleTime;
             long lastScrobbleTimeUnix = 0;
-            if(lastScrobble.Count == 0)
+            if (lastScrobble.Count == 0)
             {
                 lastScrobbleTime = user.Creation_Date;
                 lastScrobbleTimeUnix = new DateTimeOffset(lastScrobbleTime).ToUnixTimeSeconds();
@@ -53,21 +51,25 @@ public class CreateScrobbleJob : IJob
 
             //get scrobbles from spotify
             var recentlyPlayed = await _spotifyService.GetRecentlyPlayed(access_token, lastScrobbleTimeUnix);
+            
+            //check if there are any scrobbles
+            if (recentlyPlayed is null)
+                continue;
 
             int count = 0;
-            while(recentlyPlayed["next"]!.ToString() != string.Empty)
+            while (recentlyPlayed!.Next != string.Empty)
             {
-                foreach (var item in recentlyPlayed["items"]!)
+                foreach (var item in recentlyPlayed.Items)
                 {
                     //get track id
-                    var trackId = item["track"]["id"].ToString()!;
+                    var trackId = item.Track.Id;
                     //get track artist
-                    var trackArtistId = item["track"]["artists"][0]["id"].ToString()!;
+                    var trackArtistId = item.Track.Artists[0].Id;
                     //get track album
-                    var trackAlbumId = item["track"]["album"]["id"].ToString()!;
+                    var trackAlbumId = item.Track.Album.Id;
                     //get track date
-                    var trackDate = item["played_at"].ToString();
-                    var trackDateUniversal = DateTime.Parse(trackDate);
+                    var trackDate = item.PlayedAt;
+                    var trackDateUniversal = trackDate;
                     var trackDateUtc = new DateTime(
                         trackDateUniversal.Year, 
                         trackDateUniversal.Month, 
@@ -83,11 +85,15 @@ public class CreateScrobbleJob : IJob
                     if (check)
                         count++;
                 }
+
+                // if no more scrobbles, break
+                if (recentlyPlayed.Cursors?.After == null)
+                {
+                    break;
+                }
                 
-                recentlyPlayed = await _spotifyService.GetRecentlyPlayed(access_token, recentlyPlayed["cursors"]!["after"]!.ToObject<long>());
+                recentlyPlayed = await _spotifyService.GetRecentlyPlayed(access_token, long.Parse(recentlyPlayed.Cursors.After));
             }
-            // Console.WriteLine("Scrobbles created: " + count);
         }
-            
     }
 }

@@ -4,7 +4,7 @@ using Newtonsoft.Json.Linq;
 using Helpers;
 using Data;
 using DTOs;
-using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 
 namespace Services;
 
@@ -75,9 +75,6 @@ public class SpotifyService
             };
         }
 
-        Console.WriteLine(response.StatusCode);
-        Console.WriteLine(response.Content.ReadAsStringAsync().Result);
-
         return null;
     }
 
@@ -104,9 +101,6 @@ public class SpotifyService
             return album;
         }
 
-        Console.WriteLine(response.StatusCode);
-        Console.WriteLine(response.Content.ReadAsStringAsync().Result);
-
         return null;
     }
 
@@ -130,9 +124,6 @@ public class SpotifyService
                 Album = album
             };
         }
-
-        Console.WriteLine(response.StatusCode);
-        Console.WriteLine(response.Content.ReadAsStringAsync().Result);
 
         return null;
     }
@@ -161,13 +152,10 @@ public class SpotifyService
             return json["access_token"].ToString();
         }
 
-        Console.WriteLine(response.StatusCode);
-        Console.WriteLine(response.Content.ReadAsStringAsync().Result);
-
         return null;
     }
     
-    public async Task<JObject> GetRecentlyPlayed(string access_token, long after )
+    public async Task<RecentlyPlayedResponse?> GetRecentlyPlayed(string access_token, long after)
     {
         var client = new HttpClient();
         var request = new HttpRequestMessage(HttpMethod.Get, "https://api.spotify.com/v1/me/player/recently-played?limit=20&after=" + after);
@@ -176,14 +164,10 @@ public class SpotifyService
         if (response.IsSuccessStatusCode)
         {
             var responseContent = await response.Content.ReadAsStringAsync();
-            var json = JObject.Parse(responseContent);
-            return json;
+            var content = JsonConvert.DeserializeObject<RecentlyPlayedResponse>(responseContent);
+            return content;
         }
-
-        Console.WriteLine(response.StatusCode);
-        Console.WriteLine(response.Content.ReadAsStringAsync().Result);
-
-        return JObject.Parse("{error: true}");
+        return null; // Return null if the request fails
     }
 
     public async Task<SongRecommendations> GetSongRecommendations(string artistId, string songId)
@@ -205,9 +189,6 @@ public class SpotifyService
                 }).ToList()
             };
         }
-
-        Console.WriteLine(response.StatusCode);
-        Console.WriteLine(response.Content.ReadAsStringAsync().Result);
 
         return new SongRecommendations{
             Songs = new List<RecommendedSong>()
@@ -232,9 +213,6 @@ public class SpotifyService
                 }).Take(5).ToList()
             };
         }
-
-        Console.WriteLine(response.StatusCode);
-        Console.WriteLine(response.Content.ReadAsStringAsync().Result);
 
         return new ArtistRecommendations{
             Artists = new List<RecommendedArtist>()
