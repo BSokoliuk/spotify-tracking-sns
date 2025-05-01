@@ -27,7 +27,6 @@ namespace Services
             };
 
             var result = await _userManager.CreateAsync(user, registerRequest.Password);
-            Console.WriteLine(result);
             var errors = result.Errors.ToList();
 
             if (result.Succeeded)
@@ -93,7 +92,7 @@ namespace Services
         //     return imageByte;
         // }
 
-        public static byte[] getDeafultAvatar()
+        public static byte[] getDefaultAvatar()
         {
             byte[] imageByte = System.IO.File.ReadAllBytes("avatar.jpg");
             return imageByte;
