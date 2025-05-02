@@ -11,18 +11,18 @@ namespace Services;
 public class SpotifyService
 {
     private readonly SpotifySettings _spotifySettings;
-    private string _accessToken;
+    private readonly string _accessToken;
     private readonly DatabaseContext _context;
 
     public SpotifyService(SpotifySettings spotifySettings, DatabaseContext context)
     {
         _spotifySettings = spotifySettings;
         _context = context;
-        _accessToken = GetAccesToken().Result;
+        _accessToken = GetAccessToken().Result;
     }
 
 
-    public async Task<string> GetAccesToken()
+    public async Task<string> GetAccessToken()
     {
         var client = new HttpClient();
         var request = new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token");
@@ -33,18 +33,27 @@ public class SpotifyService
             {"grant_type", "refresh_token"},
             {"refresh_token", _spotifySettings.RefreshToken}
         });
+
         var response = await client.SendAsync(request);
-        if (response.IsSuccessStatusCode)
+
+        if (!response.IsSuccessStatusCode)
         {
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var json = JObject.Parse(responseContent);
-            return json["access_token"].ToString();
+            throw new HttpRequestException($"Failed to retrieve access token. Status code: {response.StatusCode}, Reason: {response.ReasonPhrase}");
         }
 
-        return null;
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var json = JObject.Parse(responseContent);
+
+        var accessToken = json["access_token"]?.ToString();
+        if (string.IsNullOrEmpty(accessToken))
+        {
+            throw new InvalidOperationException("The access token was not found in the response");
+        }
+
+        return accessToken;
     }
 
-    private async Task<byte[]> GetImage(string url)
+    private static async Task<byte[]> GetImage(string url)
     {
         using var client = new HttpClient();
         using var response = await client.GetAsync(url);
@@ -61,21 +70,41 @@ public class SpotifyService
         var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.spotify.com/v1/artists/{id}");
         request.Headers.TryAddWithoutValidation("Authorization", $"Bearer {_accessToken}");
         var response = await client.SendAsync(request);
-        if (response.IsSuccessStatusCode)
+
+        if (!response.IsSuccessStatusCode)
         {
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var json = JObject.Parse(responseContent);
-            return new Artist
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = json["name"].ToString(),
-                Id_Artist_Spotify_API = json["id"].ToString(),
-                Photo = await GetImage(json["images"].ToArray().Length == 0 ? "https://i.scdn.co/image/ab67616d00001e0299760923cfbfe739fb870817" : json["images"][0]["url"].ToString()),
-                Description = ""
-            };
+            throw new HttpRequestException($"Failed to fetch artist data for ID: {id}. Status code: {response.StatusCode}");
+        }
+       
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var json = JObject.Parse(responseContent);
+
+        var artistName = json["name"]?.ToString();
+        var artistSpotifyID = json["id"]?.ToString();
+        var imagesArray = json["images"]?.ToArray();
+
+        if (string.IsNullOrEmpty(artistName) || string.IsNullOrEmpty(artistSpotifyID))
+        {
+            throw new InvalidOperationException($"Invalid response: Missing required artist fields for ID: {id}");
         }
 
-        return null;
+        var imageUrl = imagesArray?.Length > 0
+            ? imagesArray[0]["url"]?.ToString()
+            : "https://i.scdn.co/image/ab67616d00001e0299760923cfbfe739fb870817";
+
+        if (string.IsNullOrEmpty(imageUrl))
+        {
+            throw new InvalidOperationException($"Invalid response: Missing image URL for artist ID: {id}");
+        }
+
+        return new Artist
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = artistName,
+            Id_Artist_Spotify_API = artistSpotifyID,
+            Photo = await GetImage(imageUrl),
+            Description = ""
+        };
     }
 
     public async Task<Album> GetAlbum(string id, Artist artist)
@@ -84,24 +113,42 @@ public class SpotifyService
         var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.spotify.com/v1/albums/{id}");
         request.Headers.TryAddWithoutValidation("Authorization", $"Bearer {_accessToken}");
         var response = await client.SendAsync(request);
-        if (response.IsSuccessStatusCode)
+        
+        if (!response.IsSuccessStatusCode)
         {
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var json = JObject.Parse(responseContent);
-            var album = new Album
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = json["name"].ToString(),
-                Id_Album_Spotify_API = json["id"].ToString(),
-                Cover = await GetImage(json["images"][0]["url"].ToString()),
-                Description = "",
-                Id_Artist_Internal = artist.Id,
-                Artist = artist
-            };
-            return album;
+            throw new HttpRequestException($"Failed to fetch album data for ID: {id}. Status code: {response.StatusCode}");
         }
 
-        return null;
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var json = JObject.Parse(responseContent);
+
+        var albumName = json["name"]?.ToString();
+        var albumSpotifyID = json["id"]?.ToString();
+        var imagesArray = json["images"]?.ToArray();
+
+        if (string.IsNullOrEmpty(albumName) || string.IsNullOrEmpty(albumSpotifyID) || imagesArray == null || imagesArray.Length == 0)
+        {
+            throw new InvalidOperationException($"Invalid response: Missing required album fields for ID: {id}");
+        }
+
+        var imageUrl = imagesArray[0]["url"]?.ToString();
+
+        if (string.IsNullOrEmpty(imageUrl))
+        {
+            throw new InvalidOperationException($"Invalid response: Missing image URL for album ID: {id}");
+        }
+
+        var album = new Album
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = albumName,
+            Id_Album_Spotify_API = albumSpotifyID,
+            Cover = await GetImage(imageUrl),
+            Description = "",
+            Id_Artist_Internal = artist.Id,
+            Artist = artist
+        };
+        return album;
     }
 
     public async Task<Song> GetSong(string id, Album album)
@@ -110,22 +157,32 @@ public class SpotifyService
         var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.spotify.com/v1/tracks/{id}");
         request.Headers.TryAddWithoutValidation("Authorization", $"Bearer {_accessToken}");
         var response = await client.SendAsync(request);
-        if (response.IsSuccessStatusCode)
+        
+        if (!response.IsSuccessStatusCode)
         {
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var json = JObject.Parse(responseContent);
-            return new Song
-            {
-                Id = Guid.NewGuid().ToString(),
-                Title = json["name"].ToString(),
-                Id_Song_Spotify_API = json["id"].ToString(),
-                Description = "",
-                Id_Album_Internal = album.Id,
-                Album = album
-            };
+            throw new HttpRequestException($"Failed to fetch song data for ID: {id}. Status code: {response.StatusCode}");
         }
 
-        return null;
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var json = JObject.Parse(responseContent);
+
+        var songName = json["name"]?.ToString();
+        var songSpotifyID = json["id"]?.ToString();
+
+        if (string.IsNullOrEmpty(songName) || string.IsNullOrEmpty(songSpotifyID))
+        {
+            throw new InvalidOperationException($"Invalid response: Missing required song fields for ID: {id}");
+        }
+
+        return new Song
+        {
+            Id = Guid.NewGuid().ToString(),
+            Title = songName,
+            Id_Song_Spotify_API = songSpotifyID,
+            Description = "",
+            Id_Album_Internal = album.Id,
+            Album = album
+        };
     }
 
     public async Task<String> GetUserAccessToken(User user, string refresh_token)
@@ -142,17 +199,32 @@ public class SpotifyService
         request.Headers.TryAddWithoutValidation("Content-Type", "application/x-www-form-urlencoded");
         var response = await client.SendAsync(request);
 
-        if (response.IsSuccessStatusCode)
+        if (!response.IsSuccessStatusCode)
         {
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var json = JObject.Parse(responseContent);
-            user.RefreshToken = json["refresh_token"].ToString();
-            _context.Users.Update(user);
-            await _context.SaveChangesAsync();
-            return json["access_token"].ToString();
+            throw new HttpRequestException($"Failed to retrieve access token. Status code: {response.StatusCode}, Reason: {response.ReasonPhrase}");
         }
 
-        return null;
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var json = JObject.Parse(responseContent);
+
+        var refreshToken = json["refresh_token"]?.ToString();
+        var accessToken = json["access_token"]?.ToString();
+
+        if (string.IsNullOrEmpty(refreshToken))
+        {
+            throw new InvalidOperationException("The refresh token was not found in the response");
+        }
+
+        if (string.IsNullOrEmpty(accessToken))
+        {
+            throw new InvalidOperationException("The access token was not found in the response");
+        }
+
+        user.RefreshToken = refreshToken;
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
+
+        return accessToken;
     }
     
     public async Task<RecentlyPlayedResponse?> GetRecentlyPlayed(string access_token, long after)
@@ -169,54 +241,4 @@ public class SpotifyService
         }
         return null; // Return null if the request fails
     }
-
-    public async Task<SongRecommendations> GetSongRecommendations(string artistId, string songId)
-    {
-        var client = new HttpClient();
-        var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.spotify.com/v1/recommendations?limit=5&seed_artists={artistId}&seed_tracks={songId}");
-        request.Headers.TryAddWithoutValidation("Authorization", $"Bearer {_accessToken}");
-        var response = await client.SendAsync(request);
-        if (response.IsSuccessStatusCode)
-        {
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var json = JObject.Parse(responseContent);
-            return new SongRecommendations{
-                Songs = json["tracks"].Select(song => new RecommendedSong{
-                    Title = song["name"].ToString(),
-                    Id = song["id"].ToString(),
-                    Artist = song["artists"][0]["name"].ToString(),
-                    Cover = song["album"]["images"][0]["url"].ToString()
-                }).ToList()
-            };
-        }
-
-        return new SongRecommendations{
-            Songs = new List<RecommendedSong>()
-        };
-    }
-
-    public async Task<ArtistRecommendations> GetArtistRecommendations(string artistId)
-    {
-        var client = new HttpClient();
-        var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.spotify.com/v1/artists/{artistId}/related-artists");
-        request.Headers.TryAddWithoutValidation("Authorization", $"Bearer {_accessToken}");
-        var response = await client.SendAsync(request);
-        if (response.IsSuccessStatusCode)
-        {
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var json = JObject.Parse(responseContent);
-            return new ArtistRecommendations{
-                Artists = json["artists"].Select(artist => new RecommendedArtist{
-                    Name = artist["name"].ToString(),
-                    Id = artist["id"].ToString(),
-                    Photo = artist["images"][0]["url"].ToString()
-                }).Take(5).ToList()
-            };
-        }
-
-        return new ArtistRecommendations{
-            Artists = new List<RecommendedArtist>()
-        };
-    }
-
 }
