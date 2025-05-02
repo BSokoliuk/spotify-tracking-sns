@@ -373,6 +373,12 @@ public class ScrobblesController : ControllerBase
         try
         {
             var data = await _scrobbleService.GetSongByName(name);
+            
+            if (data is null)
+            {
+                return NotFound(new { message = $"Song with name: {name} not found" });
+            }
+
             return Ok(new SongResponse
             {
                 Success = true,
@@ -394,6 +400,12 @@ public class ScrobblesController : ControllerBase
         try
         {
             var data = await _scrobbleService.GetAlbumByName(name);
+            
+            if (data is null)
+            {
+                return NotFound(new { message = $"Album with name: {name} not found" });
+            }
+
             return Ok(new AlbumResponse
             {
                 Success = true,
@@ -415,6 +427,12 @@ public class ScrobblesController : ControllerBase
         try
         {
             var data = await _scrobbleService.GetArtistByName(name);
+
+            if (data is null)
+            {
+                return NotFound(new { message = $"Artist with name: {name} not found" });
+            }
+
             return Ok(new ArtistResponse
             {
                 Success = true,

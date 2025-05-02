@@ -1,23 +1,19 @@
 using Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Models;
 using DTOs;
-using System.Drawing;
-using System.Diagnostics;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.Fonts;
+using SixLabors.ImageSharp.Drawing.Processing;
 
 namespace Services;
 
-public class ScrobbleService
+public class ScrobbleService(DatabaseContext context, SpotifyService spotifyService)
 {
-    private readonly DatabaseContext _context;
-    private readonly SpotifyService _spotifyService;
-
-    public ScrobbleService(DatabaseContext context, SpotifyService spotifyService)
-    {
-        _context = context;
-        _spotifyService = spotifyService;
-    }
+    private readonly DatabaseContext _context = context;
+    private readonly SpotifyService _spotifyService = spotifyService;
 
     public async Task<List<Scrobble>> GetRecent(string userId, int n)
     {
@@ -431,52 +427,31 @@ public class ScrobbleService
     {
         var album = await _context.Albums.FirstOrDefaultAsync(a => a.Id_Album_Spotify_API == spotify_albumId)
             ?? await CreateAlbum(spotify_albumId, spotify_artistId);
-        if (album != null)
-        {
-            // await _spotifyService.GetAccesToken();
-            var song = await _spotifyService.GetSong(spotify_songId, album);
-            if (song != null)
-            {
-                await _context.Songs.AddAsync(song);
-                await _context.SaveChangesAsync();
-                return song;
-            }
-        }
+        var song = await _spotifyService.GetSong(spotify_songId, album);
 
-        return null;
+        await _context.Songs.AddAsync(song);
+        await _context.SaveChangesAsync();
+        return song;
     }
 
     public async Task<Album> CreateAlbum(string spotify_albumId, string spotify_artistId)
     {
         var artist = await _context.Artists.FirstOrDefaultAsync(a => a.Id_Artist_Spotify_API == spotify_artistId)
             ?? await CreateArtist(spotify_artistId);
-        if (artist != null)
-        {
-            // await _spotifyService.GetAccesToken();
-            var album = await _spotifyService.GetAlbum(spotify_albumId, artist);
-            if (album != null)
-            {
-                await _context.Albums.AddAsync(album);
-                await _context.SaveChangesAsync();
-                return album;
-            }
-        }
+        var album = await _spotifyService.GetAlbum(spotify_albumId, artist);
 
-        return null;
+        await _context.Albums.AddAsync(album);
+        await _context.SaveChangesAsync();
+        return album;
     }
 
     public async Task<Artist> CreateArtist(string spotify_artistId)
     {
-        // await _spotifyService.GetAccesToken();
         var artist = await _spotifyService.GetArtist(spotify_artistId);
-        if (artist != null)
-        {
-            await _context.Artists.AddAsync(artist);
-            await _context.SaveChangesAsync();
-            return artist;
-        }
-
-        return null;
+  
+        await _context.Artists.AddAsync(artist);
+        await _context.SaveChangesAsync();
+        return artist;
     }
 
     public async Task<bool> DeleteScrobble(string id, string userId, List<string> roles)
@@ -484,9 +459,6 @@ public class ScrobbleService
         var scrobble = await _context.Scrobbles.FirstOrDefaultAsync(s => s.Id == id);
         if (scrobble != null)
         {
-            Console.WriteLine(roles.Contains("Admin") || scrobble.Id_User == userId);
-            Console.WriteLine("scrobble.Id_User: " + scrobble.Id_User);
-            Console.WriteLine("userId: " + userId);
             if (roles.Contains("Admin") || scrobble.Id_User == userId)
             {
                 _context.Scrobbles.Remove(scrobble);
@@ -530,9 +502,9 @@ public class ScrobbleService
         return artists;
     }
 
-    public async Task<SongResponse> GetSongByName(string name)
+    public async Task<SongResponse?> GetSongByName(string name)
     {
-        if(name.Contains("%2E"))
+        if (name.Contains("%2E"))
             name = name.Replace("%2E", ".");
         var song = await _context.Songs
             .Include(s => s.Album)
@@ -543,6 +515,10 @@ public class ScrobbleService
             .Include(s => s.FavouriteSongs)
             .ThenInclude(s => s.User)
             .FirstOrDefaultAsync(s => s.Title.ToLower() == name.ToLower());
+        if (song is null)
+        {
+            return null;
+        }
         var scrobbleCount = await _context.Scrobbles.CountAsync(s => s.Id_Song_Internal == song.Id);
         var userCount = await _context.Scrobbles
             .Where(s => s.Id_Song_Internal == song.Id)
@@ -563,9 +539,9 @@ public class ScrobbleService
         };
     }
 
-    public async Task<AlbumResponse> GetAlbumByName(string name)
+    public async Task<AlbumResponse?> GetAlbumByName(string name)
     {
-        if(name.Contains("%2E"))
+        if (name.Contains("%2E"))
             name = name.Replace("%2E", ".");
         var album = await _context.Albums
             .Include(a => a.Artist)
@@ -575,6 +551,10 @@ public class ScrobbleService
             .ThenInclude(a => a.Sender)
             .Include(a => a.AlbumRatings)
             .FirstOrDefaultAsync(a => a.Name.ToLower() == name.ToLower());
+        if (album is null)
+        {
+            return null;
+        }
         var scrobbleCount = await _context.Scrobbles
             .Where(s => s.Song.Album.Id == album.Id)
             .CountAsync();
@@ -597,9 +577,9 @@ public class ScrobbleService
         };
     }
 
-    public async Task<ArtistResponse> GetArtistByName(string name)
+    public async Task<ArtistResponse?> GetArtistByName(string name)
     {
-        if(name.Contains("%2E"))
+        if (name.Contains("%2E"))
             name = name.Replace("%2E", ".");
         var artist = await _context.Artists
             .Include(a => a.Albums)
@@ -609,6 +589,12 @@ public class ScrobbleService
                 .ThenInclude(a => a.Sender)
             .Include(a => a.ArtistRatings)
             .FirstOrDefaultAsync(a => a.Name.ToLower() == name.ToLower());
+
+        if (artist is null)
+        {
+            return null;
+        }
+
         var scrobbleCount = await _context.Scrobbles
             .Where(s => s.Song.Album.Artist.Id == artist.Id)
             .CountAsync();
@@ -655,7 +641,7 @@ public class ScrobbleService
         return data;
     }
 
-    public async Task<byte[]> GetArtistsCollage(string userId, DateTime start_date, DateTime end_date, int n, Bitmap collage, Graphics graphics, System.Drawing.Imaging.ImageAttributes attributes, int imageSize, int adjustedCollageSize, Font font, SolidBrush brush)
+    public async Task<byte[]> GetArtistsCollage(string userId, DateTime start_date, DateTime end_date, int n, int imageSize, int collageSize)
     {
         var groupings = await _context.Scrobbles
             .Where(s => s.Scrobble_Date >= start_date && s.Scrobble_Date <= end_date && s.Id_User == userId)
@@ -672,30 +658,44 @@ public class ScrobbleService
             .OrderByDescending(s => s.Count)
             .Take(n)
             .ToList();
+
+        int adjustedCollageSize = imageSize * collageSize;
+        using var collage = new Image<Rgba32>(adjustedCollageSize, adjustedCollageSize);
         int x = 0, y = 0;
+
         foreach (var artist in data)
         {
             var imageBytes = artist.Artist.Photo;
             using var ms = new MemoryStream(imageBytes);
-            var image = Image.FromStream(ms);
-            var rect = new Rectangle(x, y, imageSize, imageSize);
-            graphics.DrawImage(image, rect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, attributes);
+            using var artistImage = Image.Load<Rgba32>(ms);
 
-            graphics.DrawString(artist.Artist.Name, font, brush, x, y + imageSize - font.Height);
+            // Resize the artist image to fit the collage grid
+            artistImage.Mutate(ctx => ctx.Resize(imageSize, imageSize));
+            collage.Mutate(ctx => ctx.DrawImage(artistImage, new Point(x, y), 1f));
+
+            // Draw the artist's name below the image
+            var font = SystemFonts.CreateFont("Comic Sans MS", 16, FontStyle.Bold);
+            var textOptions = new TextOptions(font)
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Bottom
+            };
+            collage.Mutate(ctx => ctx.DrawText(artist.Artist.Name, font, Color.White, new PointF(x + imageSize / 2, y + imageSize - 20)));
+
             x += imageSize;
-            if (x == adjustedCollageSize)
+            if (x >= adjustedCollageSize)
             {
                 x = 0;
                 y += imageSize;
             }
         }
 
-        var collageBytes = ImageToByte(collage);
-
-        return collageBytes;
+        using var outputStream = new MemoryStream();
+        collage.SaveAsPng(outputStream);
+        return outputStream.ToArray();
     }
 
-    public async Task<byte[]> GetAlbumsCollage(string userId, DateTime start_date, DateTime end_date, int n, Bitmap collage, Graphics graphics, System.Drawing.Imaging.ImageAttributes attributes, int imageSize, int adjustedCollageSize, Font font, SolidBrush brush)
+    public async Task<byte[]> GetAlbumsCollage(string userId, DateTime start_date, DateTime end_date, int n, int imageSize, int collageSize)
     {
         var groupings = await _context.Scrobbles
             .Where(s => s.Scrobble_Date >= start_date && s.Scrobble_Date <= end_date && s.Id_User == userId)
@@ -712,30 +712,39 @@ public class ScrobbleService
             .OrderByDescending(s => s.Count)
             .Take(n)
             .ToList();
+
+        int adjustedCollageSize = imageSize * collageSize;
+        using var collage = new Image<Rgba32>(adjustedCollageSize, adjustedCollageSize);
         int x = 0, y = 0;
+
         foreach (var album in data)
         {
             var imageBytes = album.Album.Cover;
             using var ms = new MemoryStream(imageBytes);
-            var image = Image.FromStream(ms);
-            var rect = new Rectangle(x, y, imageSize, imageSize);
-            graphics.DrawImage(image, rect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, attributes);
+            using var albumImage = Image.Load<Rgba32>(ms);
 
-            graphics.DrawString(album.Album.Name, font, brush, x, y + imageSize - font.Height);
+            // Resize the album image to fit the collage grid
+            albumImage.Mutate(ctx => ctx.Resize(imageSize, imageSize));
+            collage.Mutate(ctx => ctx.DrawImage(albumImage, new Point(x, y), 1f));
+
+            // Draw the album's name below the image
+            var font = SystemFonts.CreateFont("Comic Sans MS", 16, FontStyle.Bold);
+            collage.Mutate(ctx => ctx.DrawText(album.Album.Name, font, Color.White, new PointF(x + imageSize / 2, y + imageSize - 20)));
+
             x += imageSize;
-            if (x == adjustedCollageSize)
+            if (x >= adjustedCollageSize)
             {
                 x = 0;
                 y += imageSize;
             }
         }
 
-        var collageBytes = ImageToByte(collage);
-
-        return collageBytes;
+        using var outputStream = new MemoryStream();
+        collage.SaveAsPng(outputStream);
+        return outputStream.ToArray();
     }
 
-    public async Task<byte[]> GetSongsCollage(string userId, DateTime start_date, DateTime end_date, int n, Bitmap collage, Graphics graphics, System.Drawing.Imaging.ImageAttributes attributes, int imageSize, int adjustedCollageSize, Font font, SolidBrush brush)
+    public async Task<byte[]> GetSongsCollage(string userId, DateTime start_date, DateTime end_date, int n, int imageSize, int collageSize)
     {
         var groupings = await _context.Scrobbles
             .Where(s => s.Scrobble_Date >= start_date && s.Scrobble_Date <= end_date && s.Id_User == userId)
@@ -752,27 +761,36 @@ public class ScrobbleService
             .OrderByDescending(s => s.Count)
             .Take(n)
             .ToList();
+
+        int adjustedCollageSize = imageSize * collageSize;
+        using var collage = new Image<Rgba32>(adjustedCollageSize, adjustedCollageSize);
         int x = 0, y = 0;
+
         foreach (var song in data)
         {
             var imageBytes = song.Song.Album.Cover;
             using var ms = new MemoryStream(imageBytes);
-            var image = Image.FromStream(ms);
-            var rect = new Rectangle(x, y, imageSize, imageSize);
-            graphics.DrawImage(image, rect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, attributes);
+            using var songImage = Image.Load<Rgba32>(ms);
 
-            graphics.DrawString(song.Song.Title, font, brush, x, y + imageSize - font.Height);
+            // Resize the song image to fit the collage grid
+            songImage.Mutate(ctx => ctx.Resize(imageSize, imageSize));
+            collage.Mutate(ctx => ctx.DrawImage(songImage, new Point(x, y), 1f));
+
+            // Draw the song's title below the image
+            var font = SystemFonts.CreateFont("Comic Sans MS", 16, FontStyle.Bold);
+            collage.Mutate(ctx => ctx.DrawText(song.Song.Title, font, Color.White, new PointF(x + imageSize / 2, y + imageSize - 20)));
+
             x += imageSize;
-            if (x == adjustedCollageSize)
+            if (x >= adjustedCollageSize)
             {
                 x = 0;
                 y += imageSize;
             }
         }
 
-        var collageBytes = ImageToByte(collage);
-
-        return collageBytes;
+        using var outputStream = new MemoryStream();
+        collage.SaveAsPng(outputStream);
+        return outputStream.ToArray();
     }
 
     public async Task<byte[]> GetCollage(string userId, DateTime start, DateTime end, int n, string subject)
@@ -782,53 +800,18 @@ public class ScrobbleService
 
         int collageSize = (int)Math.Sqrt(n);
         int imageSize = 1000 / collageSize;
-        int adjustedCollageSize = imageSize * collageSize;
 
-        var collage = new Bitmap(adjustedCollageSize, adjustedCollageSize);
-        var graphics = Graphics.FromImage(collage);
-
-        var matrix = new System.Drawing.Imaging.ColorMatrix();
-        matrix.Matrix33 = 0.7f;
-        var attributes = new System.Drawing.Imaging.ImageAttributes();
-        attributes.SetColorMatrix(matrix);
-
-        var fontSize = 0;
-        switch (n)
-        {
-            case 4:
-                fontSize = 24;
-                break;
-            case 9:
-                fontSize = 18;
-                break;
-            case 16:
-                fontSize = 16;
-                break;
-        }
-        var font = new Font("Comic Sans MS", fontSize, FontStyle.Bold, GraphicsUnit.Pixel);
-        var brush = new SolidBrush(Color.White);
-
-        Console.WriteLine("subject: " + subject);
         return subject switch
         {
-            "songs" => await GetSongsCollage(userId, start_date, end_date, n, collage, graphics, attributes, imageSize, adjustedCollageSize, font, brush),
-            "albums" => await GetAlbumsCollage(userId, start_date, end_date, n, collage, graphics, attributes, imageSize, adjustedCollageSize, font, brush),
-            "artists" => await GetArtistsCollage(userId, start_date, end_date, n, collage, graphics, attributes, imageSize, adjustedCollageSize, font, brush),
-            _ => await GetArtistsCollage(userId, start_date, end_date, n, collage, graphics, attributes, imageSize, adjustedCollageSize, font, brush),
+            "songs" => await GetSongsCollage(userId, start_date, end_date, n, imageSize, collageSize),
+            "albums" => await GetAlbumsCollage(userId, start_date, end_date, n, imageSize, collageSize),
+            "artists" => await GetArtistsCollage(userId, start_date, end_date, n, imageSize, collageSize),
+            _ => throw new ArgumentException("Invalid subject type", nameof(subject)),
         };
-
-    }
-
-    private byte[] ImageToByte(Image img)
-    {
-        using var stream = new MemoryStream();
-        img.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
-        return stream.ToArray();
     }
 
     public async Task<int> GetScrobbleCount()
     {
         return await _context.Scrobbles.CountAsync();
     }
-
 }
