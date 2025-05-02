@@ -4,24 +4,24 @@ using Models;
 
 namespace Services;
 
-public class FavouriteSongService
+public class FavouriteSongService(DatabaseContext context)
 {
-    private readonly DatabaseContext _context;
-
-    public FavouriteSongService(DatabaseContext context)
-    {
-        _context = context;
-
-    }
+    private readonly DatabaseContext _context = context;
 
     public async Task<FavouriteSong?> AddFavouriteSong(string songId, User user)
     {
-        //song doesn't exist -> return false
         var song = await _context.Songs.FirstOrDefaultAsync(s => s.Id == songId);
-        if (song == null) return null;
-        //song already in favourites for this user -> return false
-        if (await _context.FavouriteSongs.FirstOrDefaultAsync(fs => fs.Id_Song_Internal == songId && fs.Id_User == user.Id) != null) return null;
-        //else add song to favourites:
+        if (song == null)
+        {
+            return null;
+        }
+
+        var alreadyAdded = await _context.FavouriteSongs.FirstOrDefaultAsync(fs => fs.Id_Song_Internal == songId && fs.Id_User == user.Id) != null;
+        if (alreadyAdded)
+        {
+            return null;
+        }
+        
         var favouriteSong = new FavouriteSong
         {
             Id = Guid.NewGuid().ToString(),

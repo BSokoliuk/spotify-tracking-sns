@@ -1,19 +1,12 @@
 using Data;
-using DTOs;
 using Microsoft.EntityFrameworkCore;
 using Models;
 
 namespace Services;
 
-public class CommentService
+public class CommentService(DatabaseContext context)
 {
-    private readonly DatabaseContext _context;
-
-    public CommentService(DatabaseContext context)
-    {
-        _context = context;
-
-    }
+    private readonly DatabaseContext _context = context;
 
     public async Task<ProfileComment> GetProfileCommentById(string id)
     {

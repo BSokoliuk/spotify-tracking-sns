@@ -1,20 +1,13 @@
 using Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Models;
 using DTOs;
 
 namespace Services;
 
-public class RatingService
+public class RatingService(DatabaseContext context)
 {
-    private readonly DatabaseContext _context;
-
-    public RatingService(DatabaseContext context)
-    {
-        _context = context;
-
-    }
+    private readonly DatabaseContext _context = context;
 
     public async Task<List<RatedSong>> FetchNRatedUsersSongs(string userId, int n)
     {
@@ -188,56 +181,81 @@ public class RatingService
 
     public async Task<SongRating?> ModifyRatingForSong(string songId, int rating, string userId)
     {
-        if (rating <= 0) return null;
+        if (rating <= 0)
+        {
+            return null;
+        }
 
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
         var song = await _context.Songs.FirstOrDefaultAsync(s => s.Id == songId);
 
-        if (song != null)
+        if (user is null || song is null)
         {
-            var songRating = await _context.SongRatings.FirstOrDefaultAsync(s => s.User == user && s.Song == song);
-            songRating.Rating = rating;
-            await _context.SaveChangesAsync();
-            return songRating;
+            return null;
         }
 
-        return null;
+        var songRating = await _context.SongRatings.FirstOrDefaultAsync(s => s.User == user && s.Song == song);
+        if (songRating is null)
+        {
+            return null;
+        }
+
+        songRating.Rating = rating;
+        await _context.SaveChangesAsync();
+        return songRating;
     }
 
     public async Task<bool> ModifyRatingForAlbum(string albumId, int rating, string userId)
     {
-        if (rating <= 0) return false;
+        if (rating <= 0)
+        {
+            return false;
+        }
 
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
         var album = await _context.Albums.FirstOrDefaultAsync(s => s.Id == albumId);
 
-        if (album != null)
+        if (user is null || album is null)
         {
-            var AlbumRating = await _context.AlbumRatings.FirstOrDefaultAsync(s => s.User == user && s.Album == album);
-            AlbumRating.Rating = rating;
-            await _context.SaveChangesAsync();
-            return true;
+            return false;
+        }
+        
+        var albumRating = await _context.AlbumRatings.FirstOrDefaultAsync(s => s.User == user && s.Album == album);
+        if (albumRating is null)
+        {
+            return false;
         }
 
-        return false;
+        albumRating.Rating = rating;
+        await _context.SaveChangesAsync();
+        return true;
+        
     }
 
     public async Task<bool> ModifyRatingForArtist(string artistId, int rating, string userId)
     {
-        if (rating <= 0) return false;
+        if (rating <= 0)
+        {
+            return false;
+        }
 
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
         var artist = await _context.Artists.FirstOrDefaultAsync(s => s.Id == artistId);
 
-        if (artist != null)
+        if (user is null || artist is null)
         {
-            var ArtistRating = await _context.ArtistRatings.FirstOrDefaultAsync(s => s.User == user && s.Artist == artist);
-            ArtistRating.Rating = rating;
-            await _context.SaveChangesAsync();
-            return true;
+            return false;
         }
 
-        return false;
+        var artistRating = await _context.ArtistRatings.FirstOrDefaultAsync(s => s.User == user && s.Artist == artist);
+        if (artistRating is null)
+        {
+            return false;
+        }
+
+        artistRating.Rating = rating;
+        await _context.SaveChangesAsync();
+        return true;
     }
 
     public async Task<List<AverageRatedSong>> FetchHighestRatedSongs(int n)
@@ -293,5 +311,4 @@ public class RatingService
             .ToListAsync();
         return data;
     }
-
 }

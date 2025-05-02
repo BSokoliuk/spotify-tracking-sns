@@ -4,14 +4,9 @@ using Models;
 
 namespace Services;
 
-public class FollowService
+public class FollowService(DatabaseContext context)
 {
-    private readonly DatabaseContext _context;
-
-    public FollowService(DatabaseContext context)
-    {
-        _context = context;
-    }
+    private readonly DatabaseContext _context = context;
 
     public async Task<bool> FollowUser(string userId, User user)
     {
@@ -45,11 +40,10 @@ public class FollowService
 
     public async Task<List<string>> GetFollowed(string userId)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-        if (user == null) return null;
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId)
+            ?? throw new ArgumentException("User not found");
         var following = await _context.Follows.Where(f => f.Id_Follower == user.Id).ToListAsync();
-        return following.Select(f => f.Id_Followed).ToList();
-
+        return [.. following.Select(f => f.Id_Followed)];
     }
 
 }

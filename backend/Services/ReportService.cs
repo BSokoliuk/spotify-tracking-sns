@@ -1,22 +1,13 @@
 using Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Models;
 using DTOs;
-using System.Drawing;
-using System.Diagnostics;
 using System.Globalization;
 
 namespace Services;
 
-public class ReportService
+public class ReportService(DatabaseContext context)
 {
-    private readonly DatabaseContext _context;
-
-    public ReportService(DatabaseContext context, SpotifyService spotifyService)
-    {
-        _context = context;
-    }
+    private readonly DatabaseContext _context = context;
 
     public async Task<SubjectCountResponse> GetSubjectsCount(DateTime startDate, DateTime endDate, string userId)
     {
@@ -75,8 +66,6 @@ public class ReportService
 
     public async Task<TopUsersResponse> GetTopUsers(DateTime start, DateTime end, string userId, int limit, DateTime previousStartDate, DateTime previousEndDate)
     {
-        Console.WriteLine(previousStartDate);
-        Console.WriteLine(previousEndDate);
         var following = await _context.Follows
             .Where(f => f.Id_Follower == userId)
             .Select(f => f.Id_Followed)
@@ -116,7 +105,6 @@ public class ReportService
         for (int i = 0; i < topUsers.Count; i++)
         {
             var previousRank = previousTopUsers.FindIndex(u => u.User.Id == topUsers[i].User.Id) + 1;
-            Console.WriteLine(previousRank);
             topUsers[i].PreviousRank = previousRank;
         }
 
