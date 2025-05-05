@@ -1,3 +1,5 @@
+using DTOs;
+
 namespace Middleware;
 
 public class GlobalExceptionMiddleware(RequestDelegate next)
@@ -15,7 +17,7 @@ public class GlobalExceptionMiddleware(RequestDelegate next)
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
-            var response = new { Success = false, ex.Message };
+            var response = new ApiResponse(false, ex.Message);
             await context.Response.WriteAsJsonAsync(response);
         }
     }
