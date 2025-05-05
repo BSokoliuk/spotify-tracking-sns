@@ -1,10 +1,4 @@
-namespace DTOs;
-
-public class LoginRequest
-{
-    public string Username { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-}
+namespace DTOs.Auth;
 
 public class LoginResponse
 {

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace DTOs;
+namespace DTOs.Auth;
 
 public class RegisterRequest
 {
@@ -12,10 +12,4 @@ public class RegisterRequest
     public string Password { get; set; } = string.Empty;
     [Required, DataType(DataType.Password), Compare(nameof(Password), ErrorMessage = "Passwords do not match")]
     public string ConfirmPassword { get; set; } = string.Empty;
-}
-
-public class RegisterResponse
-{
-    public bool Success { get; set; }
-    public string Message { get; set; } = string.Empty;
 }

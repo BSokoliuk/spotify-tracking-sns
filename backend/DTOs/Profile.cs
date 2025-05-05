@@ -123,14 +123,6 @@ public class MostActiveUsers
     public int ScrobbleCount { get; set; } = 0;
 }
 
-public class ChangePasswordRequest
-{
-    [Required]
-    public string NewPassword { get; set; } = string.Empty;
-    [Required]
-    public string OldPassword { get; set; } = string.Empty;
-}
-
 public class ChangeBioRequest
 {
     [Required]
