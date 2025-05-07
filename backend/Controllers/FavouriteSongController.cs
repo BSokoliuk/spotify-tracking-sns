@@ -1,79 +1,52 @@
 using Microsoft.AspNetCore.Mvc;
-using Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using DTOs;
 using Helpers;
+using Services.Interfaces;
+using Results;
 
 namespace Controllers;
 
 [ApiController]
 [Route("api/favourite-song")]
-public class FavouriteSongController : ControllerBase
+public class FavoriteSongController(IFavoriteSongService favoriteSongService) : ControllerBase
 {
-    private readonly FavouriteSongService _favouriteSongService;
-    private readonly AuthenticationService _authenticationService;
-
-    public FavouriteSongController(FavouriteSongService favouriteSongService, AuthenticationService authenticationService)
-    {
-        _favouriteSongService = favouriteSongService;
-        _authenticationService = authenticationService;
-    }
+    private readonly IFavoriteSongService _favoriteSongService = favoriteSongService;
 
     [HttpPost("create")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<ActionResult> AddSongToFavourites([FromBody] FavouriteSongRequest request)
+    public async Task<ActionResult> AddSongToFavorites([FromBody] FavouriteSongRequest request)
     {
-        try
+        var userId = User.GetUserId();
+        var result = await _favoriteSongService.AddFavoriteSong(request.SongId, userId);
+        if (result.IsFailure)
         {
-            var nameIdentifier = User.GetNameIdentifier();
-            var user = await _authenticationService.GetUser(nameIdentifier);
-            var favouriteSong = await _favouriteSongService.AddFavouriteSong(request.SongId, user);
-            if (favouriteSong != null)
-                return Ok(new FavouriteSongResponse
-                {
-                    Success = true,
-                    Message = "Song added to favourites successfully",
-                    FavouriteSong = favouriteSong
-                });
-            return BadRequest(new FavouriteSongResponse
-            {
-                Success = false,
-                Message = "Failed to add song to favourites"
-            });
+            if (result.Error!.Code == CustomError.ValidationErrorCode)
+                return BadRequest(new { Success = false, Error = result.Error.Message });
+
+            return NotFound(new { Success = false, Error = result.Error.Message });
         }
-        catch (Exception e)
-        {
-            return BadRequest(new { message = e.Message });
-        }
+        
+        return Ok(result.Value);
     }
 
     [HttpDelete("delete")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<ActionResult> DeleteSongFromFavourites([FromBody] FavouriteSongRequest request)
+    public async Task<ActionResult> DeleteSongFromFavorites([FromBody] FavouriteSongRequest request)
     {
-        try
+
+        var userId = User.GetUserId();
+        var result = await _favoriteSongService.DeleteFavoriteSong(request.SongId, userId);
+        if (result.IsFailure)
         {
-            var nameIdentifier = User.GetNameIdentifier();
-            var user = await _authenticationService.GetUser(nameIdentifier);
-            var favouriteSong = await _favouriteSongService.DeleteFavouriteSong(request.SongId, user);
-            if (favouriteSong != null)
-                return Ok(new FavouriteSongResponse
-                {
-                    Success = true,
-                    Message = "Song deleted from favourites successfully",
-                    FavouriteSong = favouriteSong
-                });
-            return BadRequest(new FavouriteSongResponse
-            {
-                Success = false,
-                Message = "Failed to delete song from favourites"
-            });
+            if (result.Error!.Code == CustomError.ValidationErrorCode)
+                return BadRequest(new { Success = false, Error = result.Error.Message });
+
+            return NotFound(new { Success = false, Error = result.Error.Message });
         }
-        catch (Exception e)
-        {
-            return BadRequest(new { message = e.Message });
-        }
+        
+        return Ok(result.Value);
     }
 
     //for all users
@@ -81,25 +54,12 @@ public class FavouriteSongController : ControllerBase
     [HttpGet("most-liked")]
     public async Task<ActionResult> GetMostLikedSongs()
     {
-        try
+        var songs = await _favoriteSongService.GetMostLikedSongs(10);
+        return Ok(new FavouriteSongListResponse
         {
-            var songs = await _favouriteSongService.GetMostLikedSongs(10);
-            if (songs != null)
-                return Ok(new FavouriteSongListResponse
-                {
-                    Success = true,
-                    Message = "Songs retrieved successfully",
-                    FavouriteSongs = songs
-                });
-            return BadRequest(new FavouriteSongListResponse
-            {
-                Success = false,
-                Message = "Failed to retrieve songs"
-            });
-        }
-        catch (Exception e)
-        {
-            return BadRequest(new { message = e.Message });
-        }
+            Success = true,
+            Message = songs.Count != 0 ? "Songs retrieved successfully" : "No songs found",
+            FavouriteSongs = songs
+        });
     }
 }
