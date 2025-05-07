@@ -1,15 +1,25 @@
 using Microsoft.AspNetCore.Identity;
-using DTOs;
+using DTOs.Auth;
 using Models;
+using Services.Interfaces;
+using Settings;
+using Helpers;
+using Results;
 
 namespace Services;
 
-public class AuthenticationService(UserManager<User> userManager, SignInManager<User> signInManager)
+public class AuthenticationService(
+    UserManager<User> userManager,
+    SignInManager<User> signInManager,
+    IUserService userService,
+    ITokenService tokenService) : IAuthenticationService
 {
     private readonly UserManager<User> _userManager = userManager;
     private readonly SignInManager<User> _signInManager = signInManager;
+    private readonly IUserService _userService = userService;
+    private readonly ITokenService _tokenService = tokenService;
 
-    public async Task<(bool, string)> Register(RegisterRequest registerRequest)
+    public async Task<CustomResult<string>> Register(RegisterRequest registerRequest)
     {
         var user = new User
         {
@@ -17,68 +27,82 @@ public class AuthenticationService(UserManager<User> userManager, SignInManager<
             UserName = registerRequest.Username
         };
 
+        // Create the user
         var result = await _userManager.CreateAsync(user, registerRequest.Password);
-        var errors = result.Errors.ToList();
-
-        if (result.Succeeded)
-            return (true, "");
-
-        return (false, errors[0].Description);
-    }
-
-    public async Task<bool> AddRole(string username, string role)
-    {
-        var user = await _userManager.FindByNameAsync(username)
-            ?? throw new Exception("User not found");;
-        var result = await _userManager.AddToRoleAsync(user, role);
-        
-        return result.Succeeded;
-    }
-
-    public async Task<List<string>> GetRoles(string username)
-    {
-        var user = await _userManager.FindByNameAsync(username)
-            ?? throw new Exception("User not found");
-        var roles = await _userManager.GetRolesAsync(user);
-
-        return [.. roles];
-    }
-
-    public async Task<bool> Login(LoginRequest loginRequest)
-    {
-        var result = await _signInManager.PasswordSignInAsync(loginRequest.Username, loginRequest.Password, false, false);
-
-        if (result.Succeeded)
+        if (!result.Succeeded)
         {
-            return true;
+            return CustomResult<string>.Failure(GetIdentityError(result));
         }
 
-        return false;
+        // Assign the default role
+        var roleResult = await _userManager.AddToRoleAsync(user, "User");
+        if (!roleResult.Succeeded)
+        {
+            return CustomResult<string>.Failure(GetIdentityError(roleResult));
+        }
+
+        return CustomResult<string>.Success("User registered successfully");
     }
 
-    public async Task<User> GetUser(string username)
+    public async Task<CustomResult<LoginResponse>> Authenticate(LoginRequest loginRequest)
     {
-        var user = await _userManager.FindByNameAsync(username)
-            ?? throw new Exception("User not found");
-        return user;
+        // Validate credentials
+        var result = await _signInManager.PasswordSignInAsync(loginRequest.Username, loginRequest.Password, false, false);
+        if (!result.Succeeded)
+        {
+            return CustomResult<LoginResponse>.Failure(CustomError.ValidationError("Invalid credentials"));
+        }
+
+        // Fetch user and roles
+        var user = await _userService.GetByUserName(loginRequest.Username);
+
+        if (user is null)
+        {
+            return CustomResult<LoginResponse>.Failure(CustomError.RecordNotFound("User not found"));
+        }
+
+        var roles = await _userManager.GetRolesAsync(user);
+
+        // Generate token
+        var token = _tokenService.Generate(user, [.. roles]);
+
+        return CustomResult<LoginResponse>.Success(new LoginResponse
+        {
+            Id = user.Id,
+            IsAdmin = roles.Contains("Admin"),
+            Token = token
+        });
     }
 
-    public static byte[] getDefaultAvatar()
+    public async Task<CustomResult<string>> Logout(HttpResponse response, CookieSettings cookieSettings)
     {
-        byte[] imageByte = File.ReadAllBytes("avatar.jpg");
-        return imageByte;
+        await _signInManager.SignOutAsync();
+        response.DeleteJwtCookie(cookieSettings);
+        return CustomResult<string>.Success("Logout successful");
     }
 
-    public async Task<(bool, string)> ChangePassword(string username, string oldPassword, string newPassword)
+    public async Task<CustomResult<string>> ChangePassword(string id, string oldPassword, string newPassword)
     {
-        User user = await _userManager.FindByNameAsync(username)
-            ?? throw new Exception("User not found");
+        // Find the user
+        var user = await _userService.GetById(id);
+        if (user == null)
+        {
+            return CustomResult<string>.Failure(CustomError.RecordNotFound("User not found"));
+        }
+
+        // Attempt to change the password
         var result = await _userManager.ChangePasswordAsync(user, oldPassword, newPassword);
-        var errors = result.Errors.ToList();
+        if (!result.Succeeded)
+        {
+            return CustomResult<string>.Failure(GetIdentityError(result));
+        }
 
-        if (result.Succeeded)
-            return (true, "");
+        return CustomResult<string>.Success("Password was successfully changed");
+    }
 
-        return (false, errors[0].Description.ToString());
+    private static CustomError GetIdentityError(IdentityResult result)
+    {
+        var errorMessage = result.Errors.FirstOrDefault()?.Description ?? "An unknown error occurred";
+        return CustomError.ValidationError(errorMessage);
     }
 }
