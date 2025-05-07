@@ -3,10 +3,12 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Models;
+using Services.Interfaces;
+using Helpers;
 
-namespace Helpers;
+namespace Services;
 
-public class JWTCreator(JWTSettings jwtSettings)
+public class TokenService(JWTSettings jwtSettings) : ITokenService
 {
     private readonly JWTSettings _jwtSettings = jwtSettings;
 
