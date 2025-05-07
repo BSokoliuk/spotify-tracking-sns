@@ -15,12 +15,12 @@ function ScrobbleRow(props) {
   const handleEditFavouriteSong = async () => {
     if (!songId) return;
     if (props.heart === "heart") {
-      postData("favourite-song/create", {
+      postData("favorite-song", {
         songId: songId,
       });
       setHeart("filledHeart");
     } else {
-      deleteData("favourite-song/delete", {
+      deleteData("favorite-song", {
         songId: songId,
       });
       setHeart("heart");

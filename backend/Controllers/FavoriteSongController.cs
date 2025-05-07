@@ -9,12 +9,12 @@ using Results;
 namespace Controllers;
 
 [ApiController]
-[Route("api/favourite-song")]
+[Route("api/favorite-song")]
 public class FavoriteSongController(IFavoriteSongService favoriteSongService) : ControllerBase
 {
     private readonly IFavoriteSongService _favoriteSongService = favoriteSongService;
 
-    [HttpPost("create")]
+    [HttpPost]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult> AddSongToFavorites([FromBody] FavouriteSongRequest request)
     {
@@ -31,7 +31,7 @@ public class FavoriteSongController(IFavoriteSongService favoriteSongService) : 
         return Ok(result.Value);
     }
 
-    [HttpDelete("delete")]
+    [HttpDelete]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult> DeleteSongFromFavorites([FromBody] FavouriteSongRequest request)
     {

@@ -113,11 +113,11 @@ function Subject() {
 
   const handleEditFavouriteSong = async (song) => {
     if (songIsFavourite(song))
-      await deleteData(`favourite-song/delete`, {
+      await deleteData(`favorite-song`, {
         songId: song.id,
       });
     else
-      await postData(`favourite-song/create`, {
+      await postData(`favorite-song`, {
         songId: song.id,
       });
     getSubjectData(popularInterval());

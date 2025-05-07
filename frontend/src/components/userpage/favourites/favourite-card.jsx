@@ -31,12 +31,12 @@ function FavouriteCard(props) {
     if (!user()) return;
     if (heart() === filledHeart) {
       setHeart(emptyHeart);
-      await deleteData("favourite-song/delete", {
+      await deleteData("favorite-song", {
         songId: others.songId,
       });
     } else {
       setHeart(filledHeart);
-      await postData("favourite-song/create", {
+      await postData("favorite-song", {
         songId: others.songId,
       });
     }

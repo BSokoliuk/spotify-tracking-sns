@@ -107,7 +107,7 @@ function Charts() {
   const [likedSongs, setLikedSongs] = createSignal([]);
 
   const getLikedSongs = async () => {
-    const response = await getData("favourite-song/most-liked");
+    const response = await getData("favorite-song/most-liked");
     setLikedSongs(response.favouriteSongs);
   };
 

@@ -29,15 +29,15 @@ function SubjectBanner(props) {
 
   const handleEditFavouriteSong = async () => {
     if (songIsFavourite()) {
-      await deleteData(`favourite-song/delete`, {
+      await deleteData(`favorite-song`, {
         songId: props.songId,
       });
       setHeart("heart");
     } else {
-      await postData(`favourite-song/create`, {
+      const response = await postData(`favorite-song`, {
         songId: props.songId,
       });
-      setHeart("filledHeart");
+      if (response.success) setHeart("filledHeart");
     }
   };
 
