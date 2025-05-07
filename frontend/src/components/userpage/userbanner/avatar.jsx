@@ -26,9 +26,6 @@ function Avatar(props) {
 
     if (followers().includes(props.profileId)) {
       setText("Unfollow");
-      console.log("user is following");
-    } else {
-      console.log("user is not following");
     }
   };
 
@@ -73,12 +70,16 @@ function Avatar(props) {
   };
 
   const handleEditAvatar = async () => {
-    const res = await patchData("users/avatar", {
+    const res = await patchData("admin/avatar", {
       avatar: newImage(),
       userId: props.profileId,
     });
-    if (res.success) setImage(res.avatar);
-    else console.log("error:", res);
+    if (res.success) {
+      //FIXME: response is no longer returning avatar
+      // requires a refresh page
+      window.location.reload();
+      setImage(res.avatar);
+    }
     setNewImage(null);
   };
 

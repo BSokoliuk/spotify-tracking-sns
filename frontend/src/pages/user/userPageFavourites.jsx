@@ -20,10 +20,9 @@ function UserPageFollowers() {
   };
 
   const getUserData = async () => {
-    const userData = await getData(`users/${params.username}`);
+    const userData = await getData(`profiles/${params.username}`);
     setProfile(userData);
     setFavouriteSongs(userData.favouriteSongs);
-    console.log(userData.favouriteSongs);
   };
 
   createEffect(() => {

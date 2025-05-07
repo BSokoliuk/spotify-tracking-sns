@@ -5,7 +5,6 @@ import InfoBar from "./infobar";
 
 function UserBanner(props) {
   const { topArtistImage, ...others } = props;
-  console.log(props);
   return (
     <div class="flex w-[100%] h-[20%]">
       <Avatar
@@ -21,8 +20,8 @@ function UserBanner(props) {
           trackCount={props.scrobbleCount}
           artistCount={props.artistCount}
           songsCount={props.favourites}
-          compability={props.compability}
-          compabilityArtist={props.compabilityArtist}
+          compatibility={props.compatibility}
+          compatibilityArtist={props.compatibilityArtist}
         />
         <ProfileNav username={props.username} />
       </div>

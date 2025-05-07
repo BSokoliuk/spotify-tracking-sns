@@ -20,21 +20,23 @@ function Register() {
   const handleRegister = async (event) => {
     event.preventDefault();
     if (passwordMatch()) {
-      const res = await postData("users/register", {
+      const res = await postData("auth/register", {
         email: email(),
         username: username(),
         password: password(),
         confirmPassword: passwordConfirm(),
       });
       if (res.success) {
-        const res2 = await postData("users/login", {
+        const res2 = await postData("auth/login", {
           username: username(),
           password: password(),
         });
         localStorage.setItem("user", username());
         setUser({ userName: username(), id: res2.id });
-        const res3 = await getData("users/admin");
-        if (res3.success) setAdmin({ userName: username(), id: res3.id });
+        if (res2.isAdmin) {
+          setAdmin({ userName: username(), id: res2.id });
+        }
+
         navigate(`/user/${username()}/main`);
       } else {
         setError(res.message);

@@ -5,7 +5,7 @@ import { createEffect, createSignal, useContext } from "solid-js";
 import { patchData, postData } from "../../../getUserData";
 import ArrowUp from "../../../assets/icons/arrow-up.svg";
 import Belmondo from "../../../assets/icons/belmondoblur.png";
-import Compability from "../compability";
+import Compatibility from "../compatibility";
 import { AdminContext } from "../../../contexts/AdminContext";
 
 function MainPage(props) {
@@ -14,14 +14,14 @@ function MainPage(props) {
   const [comments, setComments] = createSignal(props.comments);
   const [comment, setComment] = createSignal("");
   const [scrobbles, setScrobbles] = createSignal(props.scrobbles);
-  const [compability, setCompability] = createSignal(null);
+  const [compatibility, setCompatibility] = createSignal(null);
   const [bio, setBio] = createSignal(props.bio);
   const [isEditingBio, setIsEditingBio] = createSignal(false);
 
   createEffect(() => {
     setComments(props.comments);
     setScrobbles(props.scrobbles);
-    setCompability(props.compability.compability);
+    setCompatibility(props.compatibility.compatibility);
   }, [props.comments]);
 
   const handleEditFavouriteSong = (songId, status) => {
@@ -103,7 +103,7 @@ function MainPage(props) {
   const handleBioEdit = async (e) => {
     e.preventDefault();
     setIsEditingBio(false);
-    const res = await patchData(`users/bio`, {
+    const res = await patchData(`admin/bio`, {
       editedBio: bio(),
       userId: props.profileId,
     });
@@ -133,11 +133,11 @@ function MainPage(props) {
           </div>
         </div>
       )}
-      {props.compability && props.compability != -1 && (
-        <div id="compability" class="xl:hidden pl-6 pb-6">
-          <Compability
-            compability={props.compability}
-            artists={props.compabilityArtist}
+      {props.compatibility && props.compatibility != -1 && (
+        <div id="compatibility" class="xl:hidden pl-6 pb-6">
+          <Compatibility
+            compatibility={props.compatibility}
+            artists={props.compatibility}
           />
         </div>
       )}

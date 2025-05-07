@@ -21,7 +21,7 @@ function ScrobbleLibrary() {
   const [numberOfPages, setNumberOfPages] = createSignal(1);
 
   createEffect(async () => {
-    const userData = await getData(`users/${params.username}`);
+    const userData = await getData(`profiles/${params.username}`);
     setProfile(userData);
   });
 

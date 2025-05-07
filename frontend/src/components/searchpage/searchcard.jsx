@@ -4,7 +4,6 @@ function SearchCard(props) {
 
   const handleClick = (e) => {
     e.preventDefault();
-    console.log(subject);
     if (subject === "user") {
       window.location.href = `/${subject}/${name}/main`;
       return;

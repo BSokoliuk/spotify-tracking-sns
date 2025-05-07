@@ -20,17 +20,17 @@ function Navbar() {
 
   const authorize = async () => {
     if (localStorage.getItem("user") === null) return false;
-    const response = await getData("users/user");
+    const response = await getData("auth/user");
     if (response.success) {
       setUser({
         userName: localStorage.getItem("user"),
         id: response.id,
       });
-      const response2 = await getData("users/admin");
-      if (response2.success) {
+
+      if (response.isAdmin) {
         setAdmin({
           userName: localStorage.getItem("user"),
-          id: response2.id,
+          id: response.id,
         });
       }
       return true;
@@ -43,7 +43,7 @@ function Navbar() {
   const handleLogout = async (e) => {
     e.preventDefault();
     localStorage.removeItem("user");
-    const response = await postData("users/logout");
+    const response = await postData("auth/logout");
     navigate("/");
     setUser(null);
     setAdmin(null);

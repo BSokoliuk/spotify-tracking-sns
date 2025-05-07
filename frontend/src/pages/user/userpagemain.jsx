@@ -1,6 +1,11 @@
 import { useParams } from "@solidjs/router";
 import { getData, postData } from "../../getUserData";
-import { createComputed, createEffect, createSignal, useContext } from "solid-js";
+import {
+  createComputed,
+  createEffect,
+  createSignal,
+  useContext,
+} from "solid-js";
 import UserBanner from "../../components/userpage/userbanner/userbanner";
 import MainPage from "../../components/userpage/main/mainpage";
 import { UserContext } from "../../contexts/UserContext";
@@ -12,15 +17,14 @@ function UserPageMain() {
   const [artists, setArtists] = createSignal(null);
   const [albums, setAlbums] = createSignal(null);
   const { user } = useContext(UserContext);
-  const [compability, setCompability] = createSignal({
-    compability: -1,
+  const [compatibility, setCompatibility] = createSignal({
+    compatibility: -1,
     artists: ["", "", ""],
   });
 
   const getProfile = async () => {
-    const userData = await getData(`users/${params.username}`);
+    const userData = await getData(`profiles/${params.username}`);
     setProfile(userData);
-    console.log(userData);
   };
 
   createEffect(() => {
@@ -63,12 +67,10 @@ function UserPageMain() {
   createComputed(async () => {
     if (user() !== null && profile() !== null) {
       if (user().id !== profile().id) {
-        const compabilityData = await getData(
-          `users/compability/?user_id=${profile().id}`
+        const compatibilityData = await getData(
+          `users/compatibility/?user_id=${profile().id}`
         );
-        console.log(compabilityData);
-        setCompability(compabilityData);
-        console.log(compability());
+        setCompatibility(compatibilityData);
       }
     }
   });
@@ -90,7 +92,7 @@ function UserPageMain() {
 
   return (
     <div class="h-[100%] flex flex-col">
-      {profile() && songs() && artists() && albums() && compability() && (
+      {profile() && songs() && artists() && albums() && compatibility() && (
         <>
           <UserBanner
             avatar={profile().profilePicture}
@@ -102,8 +104,8 @@ function UserPageMain() {
             artistCount={profile().artistCount}
             profileId={profile().id}
             userId={user() ? user().id : null}
-            compability={compability().compability}
-            compabilityArtist={compability().artists}
+            compatibility={compatibility().compatibility}
+            compatibilityArtist={compatibility().artists}
           />
           <MainPage
             scrobbles={
@@ -118,8 +120,8 @@ function UserPageMain() {
             loggedUser={user() ? user() : null}
             profileId={profile().id}
             bio={profile().description}
-            compability={compability().compability}
-            compabilityArtist={compability().artists}
+            compatibility={compatibility().compatibility}
+            compatibilityArtist={compatibility().artists}
             username={profile().userName}
           />
         </>

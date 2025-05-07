@@ -51,7 +51,6 @@ function Comment(props) {
       `comments/${subject}/${commentId}`,
       editedComment()
     );
-    console.log(res);
   };
 
   return (

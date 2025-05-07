@@ -14,16 +14,16 @@ function Login() {
 
   const handleLogin = async (event) => {
     event.preventDefault();
-    const res = await postData("users/login", {
+    const res = await postData("auth/login", {
       username: username(),
       password: password(),
     });
-    console.log(res);
     if (res.success) {
       localStorage.setItem("user", username());
       setUser({ userName: username(), id: res.id });
-      const res2 = await getData("users/admin");
-      if (res2.success) setAdmin({ userName: username(), id: res.id });
+      if (res.isAdmin) {
+        setAdmin({ userName: username(), id: res.id });
+      }
       navigate(`/user/${username()}/main`);
     } else {
       setError(res.message);

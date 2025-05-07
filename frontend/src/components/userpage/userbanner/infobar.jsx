@@ -1,16 +1,15 @@
-import Compability from "../compability";
+import Compatibility from "../compatibility";
 import Counter from "./counter";
 import { createEffect, createSignal } from "solid-js";
 function InfoBar(props) {
-  
   const [username, setUsername] = createSignal(null);
   const [date, setDate] = createSignal(null);
   const [trackCount, setTrackCount] = createSignal(null);
   const [artistCount, setArtistCount] = createSignal(null);
   const [songsCount, setSongsCount] = createSignal(null);
   const [topArtistImage, setTopArtistImage] = createSignal(null);
-  const [compability, setCompability] = createSignal(null);
-  const [compabilityArtist, setCompabilityArtist] = createSignal(null);
+  const [compatibility, setCompatibility] = createSignal(null);
+  const [compatibilityArtist, setCompatibilityArtist] = createSignal(null);
 
   createEffect(() => {
     setUsername(props.username);
@@ -19,14 +18,16 @@ function InfoBar(props) {
     setArtistCount(props.artistCount);
     setSongsCount(props.songsCount);
     setTopArtistImage(props.topArtistImage);
-    setCompability(props.compability);
-    setCompabilityArtist(props.compabilityArtist);
+    setCompatibility(props.compatibility);
+    setCompatibilityArtist(props.compatibilityArtist);
   }, [props]);
 
   return (
     <div
       class="h-[80%] bg-no-repeat bg-cover"
-      style={topArtistImage() ? `background-image: url(${topArtistImage()})` : ``}
+      style={
+        topArtistImage() ? `background-image: url(${topArtistImage()})` : ``
+      }
     >
       <div
         class={`h-[100%] flex flex-col lg:flex-row w-[100%] bg-black bg-opacity-50 text-[#f2f3ea] pb-2 pl-2`}
@@ -40,9 +41,12 @@ function InfoBar(props) {
           <Counter title="Artists" count={artistCount} />
           <Counter title="Favourite Songs" count={songsCount} />
         </div>
-        {compability() && compability()!=-1 && (
+        {compatibility() && compatibility() != -1 && (
           <div class="hidden xl:flex flex-col justify-end ">
-            <Compability compability={compability()} artists={compabilityArtist()} />
+            <Compatibility
+              compatibility={compatibility()}
+              artists={compatibilityArtist()}
+            />
           </div>
         )}
       </div>

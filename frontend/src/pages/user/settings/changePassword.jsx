@@ -19,7 +19,7 @@ function UserSettingsPassword() {
   const handleChangePassword = async (event) => {
     event.preventDefault();
     if (passwordMatch()) {
-      const res = await postData("users/change-password", {
+      const res = await postData("auth/change-password", {
         oldPassword: oldPassword(),
         newPassword: newPassword(),
       });

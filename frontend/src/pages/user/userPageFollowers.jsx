@@ -13,10 +13,9 @@ function UserPageFollowers() {
   const [followers, setFollowers] = createSignal(null);
 
   createEffect(async () => {
-    const userData = await getData(`users/${params.username}`);
+    const userData = await getData(`profiles/${params.username}`);
     setProfile(userData);
     setFollowers(userData.followers);
-    console.log(userData.followers);
   });
 
   return (

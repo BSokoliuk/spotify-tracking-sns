@@ -27,14 +27,12 @@ function Collage() {
 
   const handleClick = async (e) => {
     e.preventDefault();
-    console.log("The button was clicked.");
     const response = await postData("scrobbles/collage", {
       start: getInterval(popularInterval()),
       size: size(),
       subject: subject(),
     });
     setCollage(response.collage);
-    console.log(response);
   };
 
   const handleDownload = (e) => {

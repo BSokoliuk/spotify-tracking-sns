@@ -89,14 +89,12 @@ function UserSettings() {
 
     const spotifyUserId = await getSpotifyUserId(response.access_token);
 
-    const res = await postData(`users/connectSpotify`, {
+    const res = await postData(`spotify/connect`, {
       RefreshToken: response.refresh_token,
       Id_User_Spotify_API: spotifyUserId,
     });
     if (res.success) {
       setConnectedSpotify(true);
-    } else {
-      console.log(res.message);
     }
   };
 
@@ -133,7 +131,7 @@ function UserSettings() {
 
   const handleSpotifyDisconnect = async (e) => {
     e.preventDefault();
-    await patchData(`users/disconnectSpotify`, {});
+    await patchData(`spotify/disconnect`, {});
     setConnectedSpotify(false);
   };
 
@@ -150,7 +148,7 @@ function UserSettings() {
 
   createEffect(async () => {
     if (user()) {
-      const data = await getData(`users/${user().userName}`);
+      const data = await getData(`profiles/${user().userName}`);
       setOldBio(data.description ? data.description : "");
       if (data.refreshToken.length > 0) setConnectedSpotify(true);
       setLoading(false);
@@ -161,15 +159,24 @@ function UserSettings() {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     if (!user()) window.location.href = "/login";
   });
-  const handleEditProfile = async (e) => {
+
+  const handleEditProfileBio = async (e) => {
     e.preventDefault();
-    if (avatar() || (bio() !== oldBio() && bio().trim() !== "")) {
-      const response = await patchData(`users/${user().userName}`, {
-        bio: bio() ? bio() : oldBio(),
+    if (bio() !== oldBio() && bio().trim() !== "") {
+      const response = await patchData(`profiles/bio`, {
+        editedBio: bio(),
+      });
+      if (response.success) alert("Profile edited!");
+    } else alert("No changes made!");
+  };
+
+  const handleEditProfileAvatar = async (e) => {
+    e.preventDefault();
+    if (avatar()) {
+      const response = await patchData(`profiles/avatar`, {
         avatar: avatar() ? avatar() : "",
       });
       if (response.success) alert("Profile edited!");
-      else console.log(response.message);
     } else alert("No changes made!");
   };
 
@@ -184,14 +191,21 @@ function UserSettings() {
       {loading() && <div class="text-xl">Loading...</div>}
       {!loading() && (
         <div class="flex flex-col">
-          <form onsubmit={handleEditProfile} class="flex flex-col">
-            <span class="text-xl">Description:</span>
+          <form onsubmit={handleEditProfileBio} class="flex flex-col">
+            <span class="text-xl">Bio:</span>
             <input
               type="text"
               value={oldBio()}
               onInput={(e) => setBio(e.target.value)}
               class="text-slate-950 max-w-[200px]"
             />
+            <input
+              type="submit"
+              value="Edit bio"
+              class="p-1 border mt-1 ml-1 px-4 hover:cursor-pointer hover:bg-slate-700 hover:text-slate-100 max-w-[200px]"
+            />
+          </form>
+          <form onsubmit={handleEditProfileAvatar} class="flex flex-col">
             <span class="text-xl">Avatar:</span>
             <input type="file" accept="image/*" onChange={handleFileChange} />
             {avatar() && (
@@ -204,7 +218,7 @@ function UserSettings() {
             )}
             <input
               type="submit"
-              value="Edit"
+              value="Edit avatar"
               class="p-1 border mt-1 ml-1 px-4 hover:cursor-pointer hover:bg-slate-700 hover:text-slate-100 max-w-[200px]"
             />
           </form>

@@ -19,7 +19,7 @@ function UserPageFollowers() {
   };
 
   createEffect(async () => {
-    const userData = await getData(`users/${params.username}`);
+    const userData = await getData(`profiles/${params.username}`);
     setProfile(userData);
     setFollowings(userData.following);
   });

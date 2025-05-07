@@ -3,19 +3,19 @@ import {
   createEffect,
   createSignal,
   useContext,
-} from 'solid-js';
-import { deleteData, getData, postData } from '../../getUserData';
-import { A, useParams } from '@solidjs/router';
-import Card from '../../components/userpage/main/card';
-import heart from '../../assets/icons/heart.svg';
-import filledHeart from '../../assets/icons/filledHeart.svg';
-import { UserContext } from '../../contexts/UserContext';
-import Comment from '../../components/userpage/main/comment';
-import StarRating from '../../components/subjectpage/star-rating';
-import SubjectBanner from '../../components/subjectpage/subjectbanner';
-import calendar from '../../assets/icons/calendar.svg';
-import { encodeSubjectName } from '../../encodeSubjectName';
-import { AdminContext } from '../../contexts/AdminContext';
+} from "solid-js";
+import { deleteData, getData, postData } from "../../getUserData";
+import { A, useParams } from "@solidjs/router";
+import Card from "../../components/userpage/main/card";
+import heart from "../../assets/icons/heart.svg";
+import filledHeart from "../../assets/icons/filledHeart.svg";
+import { UserContext } from "../../contexts/UserContext";
+import Comment from "../../components/userpage/main/comment";
+import StarRating from "../../components/subjectpage/star-rating";
+import SubjectBanner from "../../components/subjectpage/subjectbanner";
+import calendar from "../../assets/icons/calendar.svg";
+import { encodeSubjectName } from "../../encodeSubjectName";
+import { AdminContext } from "../../contexts/AdminContext";
 
 function Subject() {
   const { user } = useContext(UserContext);
@@ -26,8 +26,8 @@ function Subject() {
   const [subjectData, setSubjectData] = createSignal(null);
   const [topSongs, setTopSongs] = createSignal(null);
   const [comments, setComments] = createSignal([]);
-  const [comment, setComment] = createSignal('');
-  const [popularInterval, setPopularInterval] = createSignal('week');
+  const [comment, setComment] = createSignal("");
+  const [popularInterval, setPopularInterval] = createSignal("week");
   const [isOpen, setIsOpen] = createSignal(false);
   const [listenersCount, setListenersCount] = createSignal(0);
   const [scrobbleCount, setScrobbleCount] = createSignal(0);
@@ -40,13 +40,13 @@ function Subject() {
 
   const getInterval = (interval) => {
     switch (interval) {
-      case 'day':
+      case "day":
         return new Date(new Date().setDate(new Date().getDate() - 1));
-      case 'week':
+      case "week":
         return new Date(new Date().setDate(new Date().getDate() - 7));
-      case 'month':
+      case "month":
         return new Date(new Date().setMonth(new Date().getMonth() - 1));
-      case 'year':
+      case "year":
         return new Date(new Date().setFullYear(new Date().getFullYear() - 1));
       default:
         return new Date(new Date().setDate(new Date().getDate() - 7));
@@ -85,12 +85,11 @@ function Subject() {
   const getSubjectData = async (i) => {
     const data = await getData(`scrobbles/${subject()}/${params.name}`);
     setSubjectData(data[subject()]);
-    console.log(subjectData());
     setListenersCount(data.listenersCount);
     setScrobbleCount(data.scrobbleCount);
     setAvgRating(data.avgRating);
-    if (subject() === 'artist') {
-      const data_ = await postData('scrobbles/top-n-songs-by-artist', {
+    if (subject() === "artist") {
+      const data_ = await postData("scrobbles/top-n-songs-by-artist", {
         artistId: subjectData().id,
         n: 5,
         start: getInterval(i),
@@ -137,7 +136,7 @@ function Subject() {
       });
       if (res.success) {
         setComments([res[`${subject()}Comment`], ...comments()]);
-        setComment('');
+        setComment("");
       }
     }
   };
@@ -145,11 +144,11 @@ function Subject() {
   const renderTopSongs = (songs) => {
     if (songs !== null) {
       return songs.map((song, index) => (
-        <div class='flex flex-row space-x-4 mt-2 mb-2 items-center'>
+        <div class="flex flex-row space-x-4 mt-2 mb-2 items-center">
           <p>{index + 1}</p>
           <img
             src={`data:image/png;base64,${song.song.album.cover}`}
-            class='w-20 cursor-pointer'
+            class="w-20 cursor-pointer"
             onClick={() =>
               (window.location.href = `/song/${encodeSubjectName(
                 song.song.title
@@ -159,7 +158,7 @@ function Subject() {
           {user() && (
             <img
               src={songIsFavourite(song.song) ? filledHeart : heart}
-              class='w-4 cursor-pointer'
+              class="w-4 cursor-pointer"
               onClick={(e) => {
                 e.preventDefault();
                 handleEditFavouriteSong(song.song);
@@ -168,7 +167,7 @@ function Subject() {
           )}
           <a
             href={`/song/${encodeSubjectName(song.song.title)}`}
-            class='hover:hover:text-slate-300'
+            class="hover:hover:text-slate-300"
           >
             {song.song.title}
           </a>
@@ -180,57 +179,57 @@ function Subject() {
 
   const renderSubject = (s) => {
     switch (subject()) {
-      case 'artist':
+      case "artist":
         return (
-          <div class=''>
-            <div class='w-full'>
+          <div class="">
+            <div class="w-full">
               <SubjectBanner
                 subjectImage={subjectData()?.photo}
                 subjectSecondaryImage={subjectData()?.photo}
                 primaryText={subjectData()?.name}
-                secondaryText={''}
+                secondaryText={""}
                 scrobbleCount={scrobbleCount()}
                 usersCount={listenersCount()}
                 subject={subject()}
                 id={subjectData().id_Artist_Spotify_API}
               />
             </div>
-            <div class='mt-5 pt-2 pl-2'>
-              <div class='flex flex-row'>
-                <h1 class='text-2xl font-bold pl-4'>Most listened songs</h1>
-                <div class='relative'>
+            <div class="mt-5 pt-2 pl-2">
+              <div class="flex flex-row">
+                <h1 class="text-2xl font-bold pl-4">Most listened songs</h1>
+                <div class="relative">
                   <button
                     onClick={() => setIsOpen(!isOpen())}
-                    class='h-10 ml-auto p-5 justify-center items-center flex hover:underline'
+                    class="h-10 ml-auto p-5 justify-center items-center flex hover:underline"
                   >
-                    <span class='mr-2 text-lg capitalize font-bold'>
+                    <span class="mr-2 text-lg capitalize font-bold">
                       {popularInterval}
                     </span>
-                    <img src={calendar} alt='calendar' class='w-6 h-6' />
+                    <img src={calendar} alt="calendar" class="w-6 h-6" />
                   </button>
                   {isOpen() && (
-                    <div class='absolute right-0 w-24 bg-white border rounded shadow-xl'>
+                    <div class="absolute right-0 w-24 bg-white border rounded shadow-xl">
                       <button
-                        onClick={() => handleSelect('day')}
-                        class='w-full text-center block px-4 py-1 text-sm text-gray-700 hover:bg-slate-600 hover:text-white'
+                        onClick={() => handleSelect("day")}
+                        class="w-full text-center block px-4 py-1 text-sm text-gray-700 hover:bg-slate-600 hover:text-white"
                       >
                         Day
                       </button>
                       <button
-                        onClick={() => handleSelect('week')}
-                        class='w-full text-center block px-4 py-1 text-sm text-gray-700 hover:bg-slate-600 hover:text-white'
+                        onClick={() => handleSelect("week")}
+                        class="w-full text-center block px-4 py-1 text-sm text-gray-700 hover:bg-slate-600 hover:text-white"
                       >
                         Week
                       </button>
                       <button
-                        onClick={() => handleSelect('month')}
-                        class='w-full text-center block px-4 py-1 text-sm text-gray-700 hover:bg-slate-600 hover:text-white'
+                        onClick={() => handleSelect("month")}
+                        class="w-full text-center block px-4 py-1 text-sm text-gray-700 hover:bg-slate-600 hover:text-white"
                       >
                         Month
                       </button>
                       <button
-                        onClick={() => handleSelect('year')}
-                        class='w-full text-center block px-4 py-1 text-sm text-gray-700 hover:bg-slate-600 hover:text-white'
+                        onClick={() => handleSelect("year")}
+                        class="w-full text-center block px-4 py-1 text-sm text-gray-700 hover:bg-slate-600 hover:text-white"
                       >
                         Year
                       </button>
@@ -240,18 +239,18 @@ function Subject() {
               </div>
               {renderTopSongs(topSongs())}
             </div>
-            <div class=' pt-2 pl-2'>
-              <h1 class='text-2xl font-bold mt-5 mb-2 pl-5'>Albums</h1>
-              <div class='flex flex-row space-x-2 ml-2'>
+            <div class=" pt-2 pl-2">
+              <h1 class="text-2xl font-bold mt-5 mb-2 pl-5">Albums</h1>
+              <div class="flex flex-row space-x-2 ml-2">
                 {s.albums &&
                   s.albums.map((album) => (
-                    <div class='w-[20%]'>
+                    <div class="w-[20%]">
                       <Card
                         cover={`data:image/png;base64,${album.cover}`}
                         mainText={album.name}
-                        secText={''}
+                        secText={""}
                         rating={album.rating}
-                        subject='album'
+                        subject="album"
                       />
                     </div>
                   ))}
@@ -259,10 +258,10 @@ function Subject() {
             </div>
           </div>
         );
-      case 'album':
+      case "album":
         return (
           <>
-            <div class='w-full'>
+            <div class="w-full">
               <SubjectBanner
                 subjectImage={subjectData()?.cover}
                 subjectSecondaryImage={subjectData()?.cover}
@@ -276,12 +275,12 @@ function Subject() {
             </div>
             <p>Songs:</p>
             {s.songs.map((song, index) => (
-              <div class='flex flex-row space-x-2'>
+              <div class="flex flex-row space-x-2">
                 <p>{index + 1}</p>
                 {user() && (
                   <img
                     src={songIsFavourite(song) ? filledHeart : heart}
-                    class='w-4 cursor-pointer'
+                    class="w-4 cursor-pointer"
                     onClick={(e) => {
                       e.preventDefault();
                       handleEditFavouriteSong(song);
@@ -291,7 +290,7 @@ function Subject() {
                 <p>
                   <a
                     href={`/song/${encodeSubjectName(song.title)}`}
-                    class='hover:text-slate-700'
+                    class="hover:text-slate-700"
                   >
                     {song.title}
                   </a>
@@ -300,10 +299,10 @@ function Subject() {
             ))}
           </>
         );
-      case 'song':
+      case "song":
         return (
-          <div class='flex flex-col justify-between'>
-            <div class='w-full'>
+          <div class="flex flex-col justify-between">
+            <div class="w-full">
               <SubjectBanner
                 subjectImage={subjectData()?.album.cover}
                 subjectSecondaryImage={subjectData()?.album.cover}
@@ -312,7 +311,7 @@ function Subject() {
                 scrobbleCount={scrobbleCount()}
                 usersCount={listenersCount()}
                 subject={subject()}
-                heart={songIsFavourite(subjectData()) ? 'filledHeart' : 'heart'}
+                heart={songIsFavourite(subjectData()) ? "filledHeart" : "heart"}
                 songId={subjectData().id}
                 id={subjectData().id_Song_Spotify_API}
               />
@@ -324,7 +323,7 @@ function Subject() {
     }
   };
   return (
-    <div class='w-full overflow-y-auto text-[#f2f3ea]'>
+    <div class="w-full overflow-y-auto text-[#f2f3ea]">
       {subjectData() && renderSubject(subjectData())}
       {subjectData() != null && user() && (
         <StarRating
@@ -335,17 +334,17 @@ function Subject() {
           updateAvgRating={updateAvgRating}
         />
       )}
-      <div class='pt-2 pl-2 pb-2 mr-2'>
-        <h1 class='text-2xl font-bold mt-5 mb-2 pl-5'>Comments</h1>
+      <div class="pt-2 pl-2 pb-2 mr-2">
+        <h1 class="text-2xl font-bold mt-5 mb-2 pl-5">Comments</h1>
         {user() && (
-          <form onsubmit={handleSendComment} class='flex mb-4 mx-5'>
+          <form onsubmit={handleSendComment} class="flex mb-4 mx-5">
             <input
-              type='text'
-              class='border border-slate-700 w-[100%] bg-slate-700'
+              type="text"
+              class="border border-slate-700 w-[100%] bg-slate-700"
               value={comment()}
               onInput={(e) => setComment(e.target.value)}
             />
-            <button class='border border-slate-700 ml-4 p-4'>Send</button>
+            <button class="border border-slate-700 ml-4 p-4">Send</button>
           </form>
         )}
         {comments() != null &&
