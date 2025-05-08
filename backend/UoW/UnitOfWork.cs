@@ -8,6 +8,11 @@ public sealed class UnitOfWork(DatabaseContext context) : IUnitOfWork
 {
     private readonly DatabaseContext _context = context;
     private readonly Dictionary<Type, object> _repositories = [];
+    private IFavoriteSongRepository? _favoriteSongRepository;
+
+    public IFavoriteSongRepository FavoriteSongRepository =>
+        _favoriteSongRepository ??= new FavoriteSongRepository(_context);
+
 
     public IRepository<TEntity> Repository<TEntity>() where TEntity : class
     {
