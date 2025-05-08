@@ -27,6 +27,7 @@ public interface IRepository<T> where T : class
     );
     Task<int> CountAsync(Expression<Func<T, bool>> predicate);
     Task<int> CountDistinctAsync<TProperty>(Expression<Func<T, bool>> predicate, Expression<Func<T, TProperty>> selector);
+    Task<bool> AnyAsync(Expression<Func<T, bool>> predicate);
     Task AddAsync(T entity);
     void Update(T entity);
     void Delete(object id);
