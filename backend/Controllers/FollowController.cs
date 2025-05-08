@@ -1,93 +1,79 @@
 using Microsoft.AspNetCore.Mvc;
-using Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using DTOs;
 using Helpers;
+using Services.Interfaces;
+using DTOs;
+using Results;
+using DTOs.Follows;
 
 namespace Controllers;
 
 [ApiController]
-[Route("api/follows")]
-public class FollowController : ControllerBase
+[Route("api/[controller]")]
+public class FollowController(IFollowService followService) : ControllerBase
 {
-    private readonly FollowService _followService;
-    private readonly AuthenticationService _authenticationService;
+    private readonly IFollowService _followService = followService;
 
-    public FollowController(FollowService followService, AuthenticationService authenticationService)
-    {
-        _followService = followService;
-        _authenticationService = authenticationService;
-    }
-
-    [HttpPost("create")]
+    [HttpPost("{targetUserId}")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<ActionResult> FollowUser([FromBody] FollowRequest request)
+    public async Task<ActionResult> FollowUser(string targetUserId)
     {
-        try
+        var sourceUserId = User.GetUserId();
+
+        var result = await _followService.FollowUser(sourceUserId, targetUserId);
+        
+        if (result.IsFailure)
         {
-            var nameIdentifier = User.GetNameIdentifier();
-            var user = await _authenticationService.GetUser(nameIdentifier);
-            if (await _followService.FollowUser(request.UserId, user))
-                return Ok(new FollowResponse
-                {
-                    Success = true,
-                    Message = "Followed successfully"
-                });
-            return BadRequest(new FollowResponse
-            {
-                Success = false,
-                Message = "Failed to follow user"
-            });
+            if (result.Error!.Code == CustomError.NotFoundCode)
+                return NotFound(new ApiResponse(false, result.Error.Message));
+            
+            return BadRequest(new ApiResponse(false, result.Error.Message));
         }
-        catch (Exception e)
-        {
-            return BadRequest(new { message = e.Message });
-        }
+
+        return Ok(new ApiResponse(true, "Followed successfully"));
     }
 
-    [HttpDelete("delete")]
+    [HttpDelete("{targetUserId}")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<ActionResult> UnfollowUser([FromBody] FollowRequest request)
+    public async Task<ActionResult> UnfollowUser(string targetUserId)
     {
-        try
+        var sourceUserId = User.GetUserId();
+
+        var result = await _followService.UnfollowUser(sourceUserId, targetUserId);
+
+        if (result.IsFailure)
         {
-            var nameIdentifier = User.GetNameIdentifier();
-            var user = await _authenticationService.GetUser(nameIdentifier);
-            if (await _followService.UnfollowUser(request.UserId, user))
-                return Ok(new FollowResponse
-                {
-                    Success = true,
-                    Message = "Unfollowed successfully"
-                });
-            return BadRequest(new CreateCommentResponse
-            {
-                Success = false,
-                Message = "Failed to unfollow user"
-            });
+            if (result.Error!.Code == CustomError.NotFoundCode)
+                return NotFound(new ApiResponse(false, result.Error.Message));
+            
+            return BadRequest(new ApiResponse(false, result.Error.Message));
         }
-        catch (Exception e)
-        {
-            return BadRequest(new { message = e.Message });
-        }
+
+        return Ok(new ApiResponse(true, "Unfollowed successfully"));
     }
 
-    [HttpGet("get-followed")]
-    public async Task<ActionResult> GetFollowing([FromQuery] string userId)
+    [HttpGet("{targetUserId}/is-following")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public async Task<ActionResult> IsFollowing(string targetUserId)
     {
-        try
+        var sourceUserId = User.GetUserId();
+        var result = await _followService.IsFollowing(sourceUserId, targetUserId);
+        
+        if (result.IsFailure)
         {
-            var followed = await _followService.GetFollowed(userId);
-            return Ok(new FollowedResponse
-            {
-                Success = true,
-                Message = "Followed retrieved successfully",
-                FollowedId = followed
-            });
+            if (result.Error!.Code == CustomError.NotFoundCode)
+                return NotFound(new ApiResponse(false, result.Error.Message));
+            
+            return BadRequest(new ApiResponse(false, result.Error.Message));
         }
-        catch (Exception e)
+
+        var isFollowing = result.Value;
+        return Ok(new IsFollowingResponse
         {
-            return BadRequest(new { message = e.Message });
-        }
+            Success = true,
+            Message = "Followed retrieved successfully",
+            IsFollowing = isFollowing
+        });
     }
 }
