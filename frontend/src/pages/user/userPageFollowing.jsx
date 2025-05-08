@@ -38,6 +38,7 @@ function UserPageFollowers() {
             artistCount={profile().artistCount}
             profileId={profile().id}
             followers={profile().followers}
+            userId={user() ? user().id : null}
           />
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {followings() != null &&

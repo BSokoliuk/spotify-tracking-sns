@@ -7,7 +7,7 @@ function Follower(props) {
   const handleUnfollow = async (e) => {
     e.preventDefault();
     if (confirm("Are you sure you want to unfollow this user?")) {
-      await deleteData(`follows/delete`, { userId: props.followedId });
+      await deleteData(`follow/${props.followedId}`);
       props.handleUnfollow(props.followedId);
     }
   };

@@ -10,46 +10,38 @@ function Avatar(props) {
   const { user } = useContext(UserContext);
   const { admin } = useContext(AdminContext);
   const [image, setImage] = createSignal(props.image);
-  const [followers, setFollowers] = createSignal(null);
-  const [text, setText] = createSignal("Follow");
+  const [isFollowing, setIsFollowing] = createSignal(false);
   const [newImage, setNewImage] = createSignal(null);
 
-  const getFollowers = async () => {
-    const followersData = await getData(
-      `follows/get-followed?userId=${props.userId}`
-    );
-    setFollowers(followersData.followedId);
-  };
-
-  const userIsFollowing = () => {
-    if (!followers()) return;
-
-    if (followers().includes(props.profileId)) {
-      setText("Unfollow");
+  const getIsFollowing = async () => {
+    if (!user()) return;
+    if (user().id == props.profileId) return;
+    const response = await getData(`follow/${props.profileId}/is-following`);
+    if (response.success) {
+      setIsFollowing(response.isFollowing);
     }
   };
 
   createEffect(() => {
-    getFollowers();
+    getIsFollowing();
   });
 
   createEffect(() => {
     setImage(props.image);
-    if (user()) userIsFollowing();
   });
 
   const handleClick = async (e) => {
     e.preventDefault();
-    if (text() == "Follow") {
-      await postData("follows/create", {
-        userId: props.profileId,
-      });
-      setText("Unfollow");
+    if (isFollowing()) {
+      const response = await deleteData(`follow/${props.profileId}`);
+      if (response.success) {
+        setIsFollowing(false);
+      }
     } else {
-      await deleteData("follows/delete", {
-        userId: props.profileId,
-      });
-      setText("Follow");
+      const response = await postData(`follow/${props.profileId}`);
+      if (response.success) {
+        setIsFollowing(true);
+      }
     }
   };
 
@@ -113,7 +105,7 @@ function Avatar(props) {
             class="absolute bottom-0 right-0 rounded-lg cursor-pointer hover:opacity-90 transition-all duration-150 bg-slate-400 opacity-60"
             onClick={(e) => handleClick(e)}
           >
-            <img src={text() === "Unfollow" ? tickIcon : plusIcon} />
+            <img src={isFollowing() ? tickIcon : plusIcon} />
           </button>
         </div>
       )}
