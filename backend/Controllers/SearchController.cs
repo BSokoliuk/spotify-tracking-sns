@@ -1,45 +1,33 @@
 using Microsoft.AspNetCore.Mvc;
-using Models;
-using Services;
+using DTOs.Search;
 using DTOs;
+using Services.Interfaces;
 
 namespace Controllers;
 
 [ApiController]
 [Route("api/search")]
-public class SearchController : ControllerBase
+public class SearchController(ISearchService searchService) : ControllerBase
 {
-    private readonly UserService _userService;
-    private readonly ScrobbleService _scrobbleService;
-
-    public SearchController(UserService userService, ScrobbleService scrobbleService)
-    {
-        _userService = userService;
-        _scrobbleService = scrobbleService;
-    }
+    private readonly ISearchService _searchService = searchService;
 
     [HttpGet("{query}")]
     public async Task<IActionResult> Search(string query)
     {
-        query = query.ToLower();
-        try
+        query = query.Trim().ToLower();
+        var result = await _searchService.Search(query);
+        if (result.IsFailure)
         {
-            List<UserProfile> users = await _userService.SearchUsers(query);
-            List<Song> songs = await _scrobbleService.SearchSongs(query);
-            List<Album> albums = await _scrobbleService.SearchAlbums(query);
-            List<Artist> artists = await _scrobbleService.SearchArtists(query);
-            return Ok(new SearchResponse
-            {
-                Success = true,
-                Users = users,
-                Songs = songs,
-                Albums = albums,
-                Artists = artists
-            });
+            return BadRequest(new ApiResponse(false, result.Error!.Message));
         }
-        catch (Exception e)
+
+        return Ok(new SearchResponse
         {
-            return BadRequest(new { message = e.Message });
-        }
+            Success = true,
+            Users = result.Value.Users,
+            Songs = result.Value.Songs,
+            Albums = result.Value.Albums,
+            Artists = result.Value.Artists
+        });
     }
 }
