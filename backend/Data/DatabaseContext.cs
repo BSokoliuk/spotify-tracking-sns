@@ -2,6 +2,7 @@ using Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Helpers;
+using System.Reflection;
 
 namespace Data;
 
@@ -34,14 +35,11 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : Identi
   {
     base.OnModelCreating(modelBuilder);
 
-    modelBuilder.Entity<Follow>()
-      .HasOne(f => f.Followed)
-      .WithMany(u => u.Followers)
-      .HasForeignKey(f => f.Id_Followed);
+    // apply configurations
+    modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
     new ScrobbleMap(modelBuilder.Entity<Scrobble>());
 
-    new FollowMap(modelBuilder.Entity<Follow>());
     new ProfileCommentMap(modelBuilder.Entity<ProfileComment>());
 
     new SongMap(modelBuilder.Entity<Song>());

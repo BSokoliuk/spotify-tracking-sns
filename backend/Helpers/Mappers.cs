@@ -18,19 +18,6 @@ public class ScrobbleMap
     }
 }
 
-public class FollowMap
-{
-    public FollowMap(EntityTypeBuilder<Follow> entityBuilder)
-    {
-        entityBuilder.HasKey(t => t.Id);
-        entityBuilder.ToTable("follows");
-
-        entityBuilder.Property(t => t.Id).HasColumnName("id");
-        entityBuilder.Property(t => t.Id_Follower).HasColumnName("id_follower");
-        entityBuilder.Property(t => t.Id_Followed).HasColumnName("id_followed");
-    }
-}
-
 public class ProfileCommentMap
 {
     public ProfileCommentMap(EntityTypeBuilder<ProfileComment> entityBuilder)
