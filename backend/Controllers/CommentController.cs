@@ -1,291 +1,109 @@
 using Microsoft.AspNetCore.Mvc;
-using Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using DTOs;
 using Helpers;
+using Services.Interfaces;
+using Results;
+using Models;
 
 namespace Controllers;
 
 [ApiController]
 [Route("api/comments")]
-public class CommentController : ControllerBase
+public class CommentsController(ICommentService commentService) : ControllerBase
 {
-    private readonly CommentService _commentService;
-    private readonly AuthenticationService _authenticationService;
+    private readonly ICommentService _commentService = commentService;
 
-    public CommentController(CommentService commentService, AuthenticationService authenticationService)
-    {
-        _commentService = commentService;
-        _authenticationService = authenticationService;
-    }
-
-
-    [HttpGet("profile/{id}")]
-    public async Task<IActionResult> ProfileCommentById(string id)
-    {
-        try
-        {
-            var comment = await _commentService.GetProfileCommentById(id);
-            return Ok(comment);
-        }
-        catch (Exception e)
-        {
-            return BadRequest(new { message = e.Message });
-        }
-
-    }
-
-    [HttpPost("profile/create")]
+    [HttpPost("{subject}/{subjectId}")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> CreateProfileComment([FromBody] CreateProfileCommentRequest request)
+    public async Task<IActionResult> CreateComment(string subject, string subjectId, [FromBody] string content)
     {
-        try
-        {
-            var nameIdentifier = User.GetNameIdentifier();
-            var sender = await _authenticationService.GetUser(nameIdentifier);
-            var profileComment = await _commentService.CreateProfileComment(request.Comment, request.RecipientId, sender);
-            if (profileComment is null)
-            {
-                return BadRequest(new CreateCommentResponse
-                {
-                    Success = false,
-                    Message = "Comment creation failed"
-                });
-            }
-            return Ok(new CreateCommentResponse
-            {
-                Success = true,
-                Message = "Comment created successfully",
-                ProfileComment = profileComment
+        var userId = User.GetUserId();
 
-            });
-           
-        }
-        catch (Exception e)
+        var result = await CreateCommentBySubject(subject, subjectId, content, userId);
+
+        if (result.IsFailure)
         {
-            return BadRequest(new { message = e.Message });
+            if (result.Error!.Code == CustomError.NotFoundCode)
+                return NotFound(new { message = result.Error.Message });
+
+            return BadRequest(new { message = result.Error.Message });
         }
+
+        return Ok(new { comment = result.Value });
     }
 
-    [HttpDelete("profile/{id}")]
+    [HttpDelete("{subject}/{commentId}")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> DeleteProfileComment(string id)
+    public async Task<IActionResult> DeleteComment(string subject, string commentId)
     {
         var roles = User.GetRoles();
-        try
-        {
-            var nameIdentifier = User.GetNameIdentifier();
-            var user = await _authenticationService.GetUser(nameIdentifier);
-            if (await _commentService.DeleteProfileComment(id, roles, user.Id))
-                return Ok(new { message = "Comment deleted successfully" });
+        var userId = User.GetUserId();
 
-            return BadRequest(new { message = "You don't have permission to delete this comment" });
-        }
-        catch (Exception e)
+        var result = await DeleteCommentBySubject(subject, commentId, roles, userId);
+
+        if (result.IsFailure)
         {
-            return BadRequest(new { message = e.Message });
+            if (result.Error!.Code == CustomError.NotFoundCode)
+                return NotFound(new { message = result.Error.Message });
+
+            return BadRequest(new { message = result.Error.Message });
         }
+
+        return Ok(new ApiResponse(true, "Comment deleted successfully"));
     }
 
-    [HttpGet("song/{id}")]
-    public async Task<IActionResult> SongCommentById(string id)
-    {
-        try
-        {
-            var comment = await _commentService.GetSongCommentById(id);
-            return Ok(comment);
-        }
-        catch (Exception e)
-        {
-            return BadRequest(new { message = e.Message });
-        }
-    }
-
-    [HttpPost("song/create")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> CreateSongComment([FromBody] CreateSongCommentRequest request)
-    {
-        try
-        {
-            var nameIdentifier = User.GetNameIdentifier();
-            var user = await _authenticationService.GetUser(nameIdentifier);
-            var songComment = await _commentService.CreateSongComment(request.Comment, request.SongId, user);
-            if (songComment != null)
-                return Ok(new CreateSongCommentResponse
-                {
-                    Success = true,
-                    Message = "Comment created successfully",
-                    SongComment = songComment
-                });
-            return BadRequest(new CreateCommentResponse
-            {
-                Success = false,
-                Message = "Comment creation failed"
-            });
-        }
-        catch (Exception e)
-        {
-            return BadRequest(new { message = e.Message });
-        }
-    }
-
-    [HttpDelete("song/{id}")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> DeleteSongComment(string id)
-    {
-        var roles = User.GetRoles();
-        try
-        {
-            var nameIdentifier = User.GetNameIdentifier();
-            var user = await _authenticationService.GetUser(nameIdentifier);
-            if (await _commentService.DeleteSongComment(id, roles, user.Id))
-                return Ok(new { message = "Comment deleted successfully" });
-
-            return BadRequest(new { message = "You don't have permission to delete this comment" });
-        }
-        catch (Exception e)
-        {
-            return BadRequest(new { message = e.Message });
-        }
-    }
-
-    [HttpGet("album/{id}")]
-    public async Task<IActionResult> AlbumCommentById(string id)
-    {
-        try
-        {
-            var comment = await _commentService.GetAlbumCommentById(id);
-            return Ok(comment);
-        }
-        catch (Exception e)
-        {
-            return BadRequest(new { message = e.Message });
-        }
-    }
-
-    [HttpPost("album/create")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> CreateAlbumComment([FromBody] CreateAlbumCommentRequest request)
-    {
-        try
-        {
-            var nameIdentifier = User.GetNameIdentifier();
-            var user = await _authenticationService.GetUser(nameIdentifier);
-            var albumComment = await _commentService.CreateAlbumComment(request.Comment, request.AlbumId, user);
-            if (albumComment != null)
-                return Ok(new CreateAlbumCommentResponse
-                {
-                    Success = true,
-                    Message = "Comment created successfully",
-                    AlbumComment = albumComment
-                });
-            return BadRequest(new CreateCommentResponse
-            {
-                Success = false,
-                Message = "Comment creation failed"
-            });
-        }
-        catch (Exception e)
-        {
-            return BadRequest(new { message = e.Message });
-        }
-    }
-
-    [HttpDelete("album/{id}")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> DeleteAlbumComment(string id)
-    {
-        var roles = User.GetRoles();
-        try
-        {
-            var nameIdentifier = User.GetNameIdentifier();
-            var user = await _authenticationService.GetUser(nameIdentifier);
-            if (await _commentService.DeleteAlbumComment(id, roles, user.Id))
-                return Ok(new { message = "Comment deleted successfully" });
-
-            return BadRequest(new { message = "You don't have permission to delete this comment" });
-        }
-        catch (Exception e)
-        {
-            return BadRequest(new { message = e.Message });
-        }
-    }
-
-    [HttpGet("artist/{id}")]
-    public async Task<IActionResult> ArtistCommentById(string id)
-    {
-        try
-        {
-            var comment = await _commentService.GetArtistCommentById(id);
-            return Ok(comment);
-        }
-        catch (Exception e)
-        {
-            return BadRequest(new { message = e.Message });
-        }
-    }
-
-    [HttpPost("artist/create")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> CreateArtistComment([FromBody] CreateArtistCommentRequest request)
-    {
-        try
-        {
-            var nameIdentifier = User.GetNameIdentifier();
-            var user = await _authenticationService.GetUser(nameIdentifier);
-            var artistComment = await _commentService.CreateArtistComment(request.Comment, request.ArtistId, user);
-            if (artistComment != null)
-                return Ok(new CreateArtistCommentResponse
-                {
-                    Success = true,
-                    Message = "Comment created successfully",
-                    ArtistComment = artistComment
-                });
-            return BadRequest(new CreateCommentResponse
-            {
-                Success = false,
-                Message = "Comment creation failed"
-            });
-        }
-        catch (Exception e)
-        {
-            return BadRequest(new { message = e.Message });
-        }
-    }
-
-    [HttpDelete("artist/{id}")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> DeleteArtistComment(string id)
-    {
-        var roles = User.GetRoles();
-        try
-        {
-            var nameIdentifier = User.GetNameIdentifier();
-            var user = await _authenticationService.GetUser(nameIdentifier);
-            if (await _commentService.DeleteArtistComment(id, roles, user.Id))
-                return Ok(new { message = "Comment deleted successfully" });
-
-            return BadRequest(new { message = "You don't have permission to delete this comment" });
-        }
-        catch (Exception e)
-        {
-            return BadRequest(new { message = e.Message });
-        }
-    }
-
-    [HttpPatch("{subject}/{id}")]
+    [HttpPatch("{subject}/{commentId}")]
     [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> EditComment(string subject, string id, [FromBody] string newContent)
+    public async Task<IActionResult> EditComment(string subject, string commentId, [FromBody] string newContent)
     {
-        try
+        var result = await EditCommentBySubject(subject, commentId, newContent);
+
+        if (result.IsFailure)
         {
-            var success = await _commentService.EditComment(subject, id, newContent);
-            return Ok(new { Success = success });
+            if (result.Error!.Code == CustomError.NotFoundCode)
+                return NotFound(new { message = result.Error.Message });
+
+            return BadRequest(new { message = result.Error.Message });
         }
-        catch (Exception e)
+
+        return Ok(new ApiResponse(result.Value, "Comment edited successfully"));
+    }
+
+    private async Task<CustomResult<object>> CreateCommentBySubject(string subject, string subjectId, string content, string userId)
+    {
+        return subject.ToLower() switch
         {
-            return BadRequest(new { message = e.Message });
-        }
+            "profile" => (await _commentService.CreateComment<ProfileComment>(subjectId, content, userId)).Cast<object>(),
+            "song" => (await _commentService.CreateComment<SongComment>(subjectId, content, userId)).Cast<object>(),
+            "album" => (await _commentService.CreateComment<AlbumComment>(subjectId, content, userId)).Cast<object>(),
+            "artist" => (await _commentService.CreateComment<ArtistComment>(subjectId, content, userId)).Cast<object>(),
+            _ => CustomResult<object>.Failure(CustomError.ValidationError("Invalid subject type"))
+        };
+    }
+
+    private async Task<CustomResult<bool>> DeleteCommentBySubject(string subject, string commentId, List<string> roles, string userId)
+    {
+        return subject.ToLower() switch
+        {
+            "profile" => await _commentService.DeleteComment<ProfileComment>(commentId, roles, userId),
+            "song" => await _commentService.DeleteComment<SongComment>(commentId, roles, userId),
+            "album" => await _commentService.DeleteComment<AlbumComment>(commentId, roles, userId),
+            "artist" => await _commentService.DeleteComment<ArtistComment>(commentId, roles, userId),
+            _ => CustomResult<bool>.Failure(CustomError.ValidationError("Invalid subject type"))
+        };
+    }
+
+    private async Task<CustomResult<bool>> EditCommentBySubject(string subject, string commentId, string newContent)
+    {
+        return subject.ToLower() switch
+        {
+            "profile" => await _commentService.EditComment<ProfileComment>(commentId, newContent),
+            "song" => await _commentService.EditComment<SongComment>(commentId, newContent),
+            "album" => await _commentService.EditComment<AlbumComment>(commentId, newContent),
+            "artist" => await _commentService.EditComment<ArtistComment>(commentId, newContent),
+            _ => CustomResult<bool>.Failure(CustomError.ValidationError("Invalid subject type"))
+        };
     }
 }
