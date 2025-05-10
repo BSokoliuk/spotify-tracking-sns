@@ -18,21 +18,6 @@ public class ScrobbleMap
     }
 }
 
-public class ProfileCommentMap
-{
-    public ProfileCommentMap(EntityTypeBuilder<ProfileComment> entityBuilder)
-    {
-        entityBuilder.HasKey(t => t.Id);
-        entityBuilder.ToTable("profileComments");
-
-        entityBuilder.Property(t => t.Id).HasColumnName("id");
-        entityBuilder.Property(t => t.Comment).HasColumnName("comment");
-        entityBuilder.Property(t => t.Creation_Date).HasColumnName("creation_date");
-        entityBuilder.Property(t => t.Id_Sender).HasColumnName("id_sender");
-        entityBuilder.Property(t => t.Id_Recipient).HasColumnName("id_recipient");
-    }
-}
-
 public class SongMap
 {
     public SongMap(EntityTypeBuilder<Song> entityBuilder)
@@ -57,21 +42,6 @@ public class FavouriteSongMap
 
         entityBuilder.Property(t => t.Id).HasColumnName("id");
         entityBuilder.Property(t => t.Id_User).HasColumnName("id_user");
-        entityBuilder.Property(t => t.Id_Song_Internal).HasColumnName("id_song_internal");
-    }
-}
-
-public class SongCommentMap
-{
-    public SongCommentMap(EntityTypeBuilder<SongComment> entityBuilder)
-    {
-        entityBuilder.HasKey(t => t.Id);
-        entityBuilder.ToTable("songsComments");
-
-        entityBuilder.Property(t => t.Id).HasColumnName("id");
-        entityBuilder.Property(t => t.Content).HasColumnName("content");
-        entityBuilder.Property(t => t.Creation_Date).HasColumnName("creation_date");
-        entityBuilder.Property(t => t.Id_Sender).HasColumnName("id_sender");
         entityBuilder.Property(t => t.Id_Song_Internal).HasColumnName("id_song_internal");
     }
 }
@@ -119,21 +89,6 @@ public class ArtistRatingMap
     }
 }
 
-public class ArtistCommentMap
-{
-    public ArtistCommentMap(EntityTypeBuilder<ArtistComment> entityBuilder)
-    {
-        entityBuilder.HasKey(t => t.Id);
-        entityBuilder.ToTable("artistsComment");
-
-        entityBuilder.Property(t => t.Id).HasColumnName("id");
-        entityBuilder.Property(t => t.Content).HasColumnName("content");
-        entityBuilder.Property(t => t.Creation_Date).HasColumnName("creation_date");
-        entityBuilder.Property(t => t.Id_Sender).HasColumnName("id_sender");
-        entityBuilder.Property(t => t.Id_Artist_Internal).HasColumnName("id_artist_internal");
-    }
-}
-
 public class AlbumMap
 {
     public AlbumMap(EntityTypeBuilder<Album> entityBuilder)
@@ -163,19 +118,3 @@ public class AlbumRatingMap
         entityBuilder.Property(t => t.Id_Album_Internal).HasColumnName("id_album_internal");
     }
 }
-
-public class AlbumCommentMap
-{
-    public AlbumCommentMap(EntityTypeBuilder<AlbumComment> entityBuilder)
-    {
-        entityBuilder.HasKey(t => t.Id);
-        entityBuilder.ToTable("albumsComment");
-
-        entityBuilder.Property(t => t.Id).HasColumnName("id");
-        entityBuilder.Property(t => t.Content).HasColumnName("content");
-        entityBuilder.Property(t => t.Creation_Date).HasColumnName("creation_date");
-        entityBuilder.Property(t => t.Id_Sender).HasColumnName("id_sender");
-        entityBuilder.Property(t => t.Id_Album_Internal).HasColumnName("id_album_internal");
-    }
-}
-

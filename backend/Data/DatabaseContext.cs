@@ -40,19 +40,14 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : Identi
 
     new ScrobbleMap(modelBuilder.Entity<Scrobble>());
 
-    new ProfileCommentMap(modelBuilder.Entity<ProfileComment>());
-
     new SongMap(modelBuilder.Entity<Song>());
-    new SongCommentMap(modelBuilder.Entity<SongComment>());
     new SongRatingMap(modelBuilder.Entity<SongRating>());
     new FavouriteSongMap(modelBuilder.Entity<FavouriteSong>());
 
     new AlbumMap(modelBuilder.Entity<Album>());
-    new AlbumCommentMap(modelBuilder.Entity<AlbumComment>());
     new AlbumRatingMap(modelBuilder.Entity<AlbumRating>());
 
     new ArtistMap(modelBuilder.Entity<Artist>());
-    new ArtistCommentMap(modelBuilder.Entity<ArtistComment>());
     new ArtistRatingMap(modelBuilder.Entity<ArtistRating>());
   }
 }
