@@ -1,195 +1,116 @@
 using Data;
-using Microsoft.EntityFrameworkCore;
 using Models;
+using Results;
+using Services.Interfaces;
+using UoW;
 
 namespace Services;
 
-public class CommentService(DatabaseContext context)
+public class CommentService(IUnitOfWork unitOfWork) : ICommentService
 {
-    private readonly DatabaseContext _context = context;
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
-    public async Task<ProfileComment> GetProfileCommentById(string id)
+    public async Task<CustomResult<T>> CreateComment<T>(string subjectId, string content, string userId) where T : CommentBase, new()
     {
-        var comment = await _context.ProfileComments.FirstOrDefaultAsync(c => c.Id == id) ?? throw new Exception("Comment not found");
-        return comment;
-    }
+        // Validate comment content
+        if (string.IsNullOrWhiteSpace(content) || content.Length > 500)
+        {
+            return CustomResult<T>.Failure(CustomError.ValidationError("Comment content is invalid"));
+        }
 
-    public async Task<ProfileComment> CreateProfileComment(string comment, string recipientId, User sender)
-    {
-        var recipient = await _context.Users.FirstOrDefaultAsync(u => u.Id == recipientId) ?? throw new Exception("Recipient not found");
-        var profileComment = new ProfileComment
+        // Fetch user
+        var user = await _unitOfWork.Repository<User>().GetByIdAsync(userId);
+        if (user is null)
+        {
+            return CustomResult<T>.Failure(CustomError.RecordNotFound("User not found"));
+        }
+
+        // Check if the subject exists
+        var subjectExists = typeof(T) switch
+        {
+            var type when type == typeof(ProfileComment) => await _unitOfWork.Repository<User>().AnyAsync(u => u.Id == subjectId),
+            var type when type == typeof(SongComment) => await _unitOfWork.Repository<Song>().AnyAsync(s => s.Id == subjectId),
+            var type when type == typeof(AlbumComment) => await _unitOfWork.Repository<Album>().AnyAsync(a => a.Id == subjectId),
+            var type when type == typeof(ArtistComment) => await _unitOfWork.Repository<Artist>().AnyAsync(a => a.Id == subjectId),
+            _ => false
+        };
+
+        if (!subjectExists)
+        {
+            return CustomResult<T>.Failure(CustomError.RecordNotFound("Subject not found"));
+        }
+
+        // Create the comment
+        var comment = new T
         {
             Id = Guid.NewGuid().ToString(),
-            Comment = comment,
-            Creation_Date = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour,
-                DateTime.Now.Minute, DateTime.Now.Second, DateTimeKind.Utc),
-            Id_Recipient = recipientId,
-            Id_Sender = sender.Id,
-            Sender = sender
-        };
-        await _context.ProfileComments.AddAsync(profileComment);
-        await _context.SaveChangesAsync();
-        return profileComment;
-    }
-
-    public async Task<bool> DeleteProfileComment(string id, List<string> roles, string userId)
-    {
-        var comment = await _context.ProfileComments.FirstOrDefaultAsync(c => c.Id == id) ?? throw new Exception("Comment not found");
-        if (roles.Contains("Admin") || comment.Id_Sender == userId || comment.Id_Recipient == userId)
-        {
-            _context.ProfileComments.Remove(comment);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        return false;
-    }
-
-    public async Task<SongComment> GetSongCommentById(string id)
-    {
-        var comment = await _context.SongComments.FirstOrDefaultAsync(c => c.Id == id) ?? throw new Exception("Comment not found");
-        return comment;
-    }
-
-    public async Task<SongComment> CreateSongComment(string comment, string songId, User sender)
-    {
-        var song = await _context.Songs.FirstOrDefaultAsync(u => u.Id == songId) ?? throw new Exception("Song not found");
-        var songComment = new SongComment
-        {
-            Id = Guid.NewGuid().ToString(),
-            Content = comment,
-            Creation_Date = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour,
-                DateTime.Now.Minute, DateTime.Now.Second, DateTimeKind.Utc),
-            Id_Sender = sender.Id,
-            Sender = sender,
-            Id_Song_Internal = songId,
-            Song = song
-        };
-        await _context.SongComments.AddAsync(songComment);
-        await _context.SaveChangesAsync();
-        return songComment;
-    }
-
-    public async Task<bool> DeleteSongComment(string id, List<string> roles, string userId)
-    {
-        var comment = await _context.SongComments.FirstOrDefaultAsync(c => c.Id == id) ?? throw new Exception("Comment not found");
-        if (roles.Contains("Admin") || comment.Id_Sender == userId)
-        {
-            _context.SongComments.Remove(comment);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        return false;
-    }
-
-    public async Task<AlbumComment> GetAlbumCommentById(string id)
-    {
-        var comment = await _context.AlbumComments.FirstOrDefaultAsync(c => c.Id == id) ?? throw new Exception("Comment not found");
-        return comment;
-    }
-
-    public async Task<AlbumComment> CreateAlbumComment(string comment, string albumId, User sender)
-    {
-        var album = await _context.Albums.FirstOrDefaultAsync(u => u.Id == albumId) ?? throw new Exception("Album not found");
-        var albumComment = new AlbumComment
-        {
-            Id = Guid.NewGuid().ToString(),
-            Content = comment,
-            Creation_Date = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour,
-                DateTime.Now.Minute, DateTime.Now.Second, DateTimeKind.Utc),
-            Id_Sender = sender.Id,
-            Sender = sender,
-            Id_Album_Internal = albumId,
-            Album = album
-        };
-        await _context.AlbumComments.AddAsync(albumComment);
-        await _context.SaveChangesAsync();
-        return albumComment;
-    }
-
-    public async Task<bool> DeleteAlbumComment(string id, List<string> roles, string userId)
-    {
-        var comment = await _context.AlbumComments.FirstOrDefaultAsync(c => c.Id == id) ?? throw new Exception("Comment not found");
-        if (roles.Contains("Admin") || comment.Id_Sender == userId)
-        {
-            _context.AlbumComments.Remove(comment);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        return false;
-    }
-
-    public async Task<ArtistComment> GetArtistCommentById(string id)
-    {
-        var comment = await _context.ArtistComments.FirstOrDefaultAsync(c => c.Id == id) ?? throw new Exception("Comment not found");
-        return comment;
-    }
-
-    public async Task<ArtistComment> CreateArtistComment(string comment, string artistId, User sender)
-    {
-        var artist = await _context.Artists.FirstOrDefaultAsync(u => u.Id == artistId) ?? throw new Exception("Artist not found");
-        var artistComment = new ArtistComment
-        {
-            Id = Guid.NewGuid().ToString(),
-            Content = comment,
-            Creation_Date = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour,
-                DateTime.Now.Minute, DateTime.Now.Second, DateTimeKind.Utc),
-            Id_Sender = sender.Id,
-            Sender = sender,
-            Id_Artist_Internal = artistId,
-            Artist = artist
-        };
-        await _context.ArtistComments.AddAsync(artistComment);
-        await _context.SaveChangesAsync();
-        return artistComment;
-    }
-
-    public async Task<bool> DeleteArtistComment(string id, List<string> roles, string userId)
-    {
-        var comment = await _context.ArtistComments.FirstOrDefaultAsync(c => c.Id == id) ?? throw new Exception("Comment not found");
-        if (roles.Contains("Admin") || comment.Id_Sender == userId)
-        {
-            _context.ArtistComments.Remove(comment);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        return false;
-    }
-
-    public async Task<bool> EditComment(string subject, string id, string newContent)
-    {
-        object comment = subject switch
-        {
-            "profile" => await _context.ProfileComments.FirstOrDefaultAsync(c => c.Id == id) ?? throw new Exception("Comment not found"),
-            "song" => await _context.SongComments.FirstOrDefaultAsync(c => c.Id == id) ?? throw new Exception("Comment not found"),
-            "album" => await _context.AlbumComments.FirstOrDefaultAsync(c => c.Id == id) ?? throw new Exception("Comment not found"),
-            "artist" => await _context.ArtistComments.FirstOrDefaultAsync(c => c.Id == id) ?? throw new Exception("Comment not found"),
-            _ => throw new Exception("Subject not found"),
+            Content = content,
+            CreatedAt = DateTime.UtcNow,
+            SenderId = user.Id,
+            Sender = user
         };
 
-        switch (subject)
+        // Configure additional properties for specific comment types
+        switch (comment)
         {
-            case "profile":
-                if (comment is not ProfileComment profileComment) throw new Exception("Comment not found");
-                profileComment.Comment = newContent;
+            case ProfileComment profileComment:
+                profileComment.RecipientId = subjectId;
                 break;
-            case "song":
-                if (comment is not SongComment songComment) throw new Exception("Comment not found");
-                songComment.Content = newContent;
+            case SongComment songComment:
+                songComment.SongId = subjectId;
                 break;
-            case "album":
-                if (comment is not AlbumComment albumComment) throw new Exception("Comment not found");
-                albumComment.Content = newContent;
+            case AlbumComment albumComment:
+                albumComment.AlbumId = subjectId;
                 break;
-            case "artist":
-                if (comment is not ArtistComment artistComment) throw new Exception("Comment not found");
-                artistComment.Content = newContent;
+            case ArtistComment artistComment:
+                artistComment.ArtistId = subjectId;
                 break;
         }
-        await _context.SaveChangesAsync();
-        return true;
+
+        await _unitOfWork.Repository<T>().AddAsync(comment);
+        await _unitOfWork.SaveChangesAsync();
+
+        return CustomResult<T>.Success(comment);
+    }
+
+    public async Task<CustomResult<bool>> EditComment<T>(string id, string newContent) where T : CommentBase
+    {
+        var comment = await _unitOfWork.Repository<T>().GetByIdAsync(id);
+        if (comment is null)
+        {
+            return CustomResult<bool>.Failure(CustomError.RecordNotFound("Comment not found"));
+        }
+
+        comment.Content = newContent;
+        _unitOfWork.Repository<T>().Update(comment);
+        await _unitOfWork.SaveChangesAsync();
+
+        return CustomResult<bool>.Success(true);
+    }
+
+  public async Task<CustomResult<bool>> DeleteComment<T>(string id, List<string> roles, string userId) where T : CommentBase
+    {
+        // Fetch the comment
+        var comment = await _unitOfWork.Repository<T>().GetByIdAsync(id);
+        if (comment is null)
+        {
+            return CustomResult<bool>.Failure(CustomError.RecordNotFound("Comment not found"));
+        }
+
+        bool isAdmin = roles.Contains("Admin"); // has admin role
+        bool isOwner = comment.SenderId == userId; // is the owner of the comment
+        bool isRecipient = typeof(T) == typeof(ProfileComment) // is a profile comment
+            && ((ProfileComment)(object)comment).RecipientId == userId; // is the recipient of the comment
+
+        bool isDeletionAllowed = isAdmin || isOwner || isRecipient;
+
+        if (isDeletionAllowed)
+        {
+            _unitOfWork.Repository<T>().Delete(comment);
+            await _unitOfWork.SaveChangesAsync();
+            return CustomResult<bool>.Success(true);
+        }
+
+        return CustomResult<bool>.Failure(CustomError.ValidationError("You do not have permission to delete this comment"));
     }
 }
