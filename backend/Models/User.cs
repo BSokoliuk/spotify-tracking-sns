@@ -31,16 +31,3 @@ public class User : IdentityUser
       return imageByte;
   }
 }
-
-[Table("profileComments")]
-public class ProfileComment
-{
-  public string Id { get; set; } = string.Empty;
-  public string Comment { get; set; } = string.Empty;
-  public DateTime Creation_Date { get; set; } = DateTime.Now;
-
-  public string Id_Sender { get; set; } = string.Empty;
-  public User Sender { get; set; } = null!;
-
-  public string Id_Recipient { get; set; } = string.Empty;
-}

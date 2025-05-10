@@ -32,20 +32,6 @@ public class FavouriteSong
     public Song Song { get; set; } = null!;
 }
 
-[Table("songsComments")]
-public class SongComment
-{
-    public string Id { get; set; } = string.Empty;
-    public string Content { get; set; } = string.Empty;
-    public DateTime Creation_Date { get; set; } = DateTime.Now;
-    
-    public string Id_Sender { get; set; } = string.Empty;
-    public User Sender { get; set; } = null!;
-    
-    public string Id_Song_Internal { get; set; } = string.Empty;
-    public Song Song { get; set; } = null!;
-}
-
 [Table("songsRating")]
 public class SongRating
 {

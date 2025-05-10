@@ -31,17 +31,3 @@ public class AlbumRating
     public string Id_Album_Internal { get; set; } = string.Empty;
     public Album Album { get; set; } = null!;
 }
-
-[Table("albumsComment")]
-public class AlbumComment
-{
-    public string Id { get; set; } = string.Empty;
-    public string Content { get; set; } = string.Empty;
-    public DateTime Creation_Date { get; set; } = DateTime.Now;
-
-    public string Id_Sender { get; set; } = string.Empty;
-    public User Sender { get; set; } = null!;
-
-    public string Id_Album_Internal { get; set; } = string.Empty;
-    public Album Album { get; set; } = null!;
-}
